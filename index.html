@@ -11,36 +11,36 @@
 <style>
   :root {
     /* Mangalam Brand Palette — Light Theme */
-    --bg:      #f0f0f2;
+    --bg:      #eeeeef;
     --bg2:     #ffffff;
-    --bg3:     #f7f7f9;
-    --bg4:     #ebebed;
-    --border:  rgba(0,0,0,0.08);
-    --border2: rgba(0,0,0,0.14);
-    --text:    #1a1a1f;
-    --text2:   #5a5760;
-    --text3:   #9a97a0;
+    --bg3:     #f5f5f6;
+    --bg4:     #e6e6e8;
+    --border:  rgba(0,0,0,0.10);
+    --border2: rgba(0,0,0,0.18);
+    --text:    #111113;
+    --text2:   #2c2c30;
+    --text3:   #4a4a50;
     /* Mangalam signature: deep maroon + red accent */
     --brand:        #8b1a1a;
     --brand-light:  #b52525;
     --brand-red:    #d42b2b;
-    --brand-dot:    #e03333;
+    --brand-dot:    #d42b2b;
     --brand-bg:     rgba(139,26,26,0.07);
     --brand-bg2:    rgba(212,43,43,0.07);
     /* Neutrals */
     --cream:        #f5efe6;
     --charcoal:     #3a3632;
     /* Status */
-    --red:      #c93333;
-    --red-bg:   rgba(201,51,51,0.08);
-    --amber:    #b86a1a;
-    --amber-bg: rgba(184,106,26,0.09);
-    --green:    #2e8a50;
-    --green-bg: rgba(46,138,80,0.09);
-    --blue:     #2970b8;
-    --blue-bg:  rgba(41,112,184,0.09);
-    --gold:     #a8862a;
-    --gold2:    #c9a84c;
+    --red:      #b52222;
+    --red-bg:   rgba(181,34,34,0.08);
+    --amber:    #996010;
+    --amber-bg: rgba(153,96,16,0.09);
+    --green:    #1e6e3a;
+    --green-bg: rgba(30,110,58,0.09);
+    --blue:     #1a5fa0;
+    --blue-bg:  rgba(26,95,160,0.09);
+    --gold:     #8a6c18;
+    --gold2:    #a8862a;
     --radius:    10px;
     --radius-sm: 6px;
     --font-display: 'Cormorant Garamond', Georgia, serif;
@@ -120,8 +120,8 @@
     flex-direction: column;
     gap: 1px;
   }
-  .topbar-title { font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--text); }
-  .topbar-sub { font-size: 11px; color: var(--text3); }
+  .topbar-title { font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--text); }
+  .topbar-sub { font-size: 11px; color: var(--text3); font-weight: 500; }
   .topbar-right { display: flex; align-items: center; gap: 16px; }
   .sync-status {
     display: flex; align-items: center; gap: 6px;
@@ -174,8 +174,8 @@
     transition: all 0.15s;
     font-family: var(--font-body);
   }
-  .nav-tab:hover { color: var(--text2); background: var(--bg3); }
-  .nav-tab.active { color: var(--brand-dot); background: var(--brand-bg2); font-weight: 500; }
+  .nav-tab:hover { color: var(--text); background: var(--bg3); }
+  .nav-tab.active { color: var(--brand-dot); background: var(--brand-bg2); font-weight: 600; }
 
   /* ─── MAIN LAYOUT ─── */
   .main { padding: 24px 28px; max-width: 1400px; }
@@ -191,10 +191,10 @@
   }
   .section-title {
     font-family: var(--font-display);
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 17px;
+    font-weight: 700;
     letter-spacing: 0.01em;
-    color: var(--text2);
+    color: var(--text);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -238,13 +238,13 @@
   .kpi-card.gold   { --kpi-accent: var(--brand-dot); }
   .kpi-card.gold .kpi-value { color: var(--brand-dot); }
 
-  .kpi-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; letter-spacing: 0.02em; }
-  .kpi-value { font-size: 26px; font-weight: 600; line-height: 1; margin-bottom: 6px; }
+  .kpi-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; letter-spacing: 0.02em; font-weight: 500; }
+  .kpi-value { font-size: 26px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
   .kpi-card.danger .kpi-value { color: var(--red); }
   .kpi-card.warn   .kpi-value { color: var(--amber); }
   .kpi-card.ok     .kpi-value { color: var(--green); }
-  .kpi-card.gold   .kpi-value { color: var(--gold2); }
-  .kpi-sub { font-size: 11px; color: var(--text3); }
+  .kpi-card.gold   .kpi-value { color: var(--brand-dot); }
+  .kpi-sub { font-size: 11px; color: var(--text3); font-weight: 500; }
 
   /* ─── GRID LAYOUTS ─── */
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
@@ -262,7 +262,7 @@
   .card-title {
     font-family: var(--font-body);
     font-size: 10px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text3);
     margin-bottom: 16px;
     letter-spacing: 0.1em;
@@ -288,7 +288,7 @@
   .alert-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
   .alert-body { flex: 1; }
   .alert-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-  .alert-desc { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .alert-desc { font-size: 12px; color: var(--text2); line-height: 1.6; font-weight: 400; }
   .alert-action {
     display: inline-block;
     margin-top: 8px;
@@ -316,10 +316,10 @@
 
   /* ─── BAR ROWS ─── */
   .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .bar-label { font-size: 12px; color: var(--text2); min-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-label { font-size: 12px; color: var(--text2); min-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
   .bar-track { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
   .bar-fill  { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.25,1,0.5,1); }
-  .bar-val   { font-size: 11px; color: var(--text3); min-width: 40px; text-align: right; }
+  .bar-val   { font-size: 11px; color: var(--text2); min-width: 40px; text-align: right; font-weight: 600; }
 
   /* ─── TEAM TABLE ─── */
   .team-table { width: 100%; border-collapse: collapse; }
@@ -330,22 +330,23 @@
     color: var(--text3);
     padding: 0 8px 10px;
     text-align: left;
-    border-bottom: 0.5px solid var(--border);
-    font-weight: 500;
+    border-bottom: 0.5px solid var(--border2);
+    font-weight: 600;
   }
   .team-table td {
     padding: 9px 8px;
     font-size: 12px;
     color: var(--text2);
     border-bottom: 0.5px solid var(--border);
+    font-weight: 400;
   }
   .team-table tr:last-child td { border-bottom: none; }
   .team-table tr:hover td { background: var(--bg3); }
-  .team-table td.name { color: var(--text); font-weight: 500; }
-  .team-table td.num  { text-align: right; font-variant-numeric: tabular-nums; }
-  .team-table td.good { color: var(--green); }
-  .team-table td.warn { color: var(--amber); }
-  .team-table td.bad  { color: var(--red);   }
+  .team-table td.name { color: var(--text); font-weight: 600; }
+  .team-table td.num  { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); font-weight: 500; }
+  .team-table td.good { color: var(--green); font-weight: 600; }
+  .team-table td.warn { color: var(--amber); font-weight: 600; }
+  .team-table td.bad  { color: var(--red);   font-weight: 600; }
 
   .pill {
     display: inline-block;
@@ -385,8 +386,8 @@
     font-size: 12px;
   }
   .scenario-row:last-child { border-bottom: none; }
-  .scenario-row .slabel { color: var(--text3); }
-  .scenario-row .sval   { font-weight: 600; color: var(--text); }
+  .scenario-row .slabel { color: var(--text3); font-weight: 500; }
+  .scenario-row .sval   { font-weight: 700; color: var(--text); }
   .scenario-row .sval.ok   { color: var(--green); }
   .scenario-row .sval.warn { color: var(--amber); }
   .scenario-row .sval.bad  { color: var(--red); }
@@ -482,12 +483,12 @@
   .pace-table th {
     font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--text3); padding: 0 8px 10px; text-align: left;
-    border-bottom: 0.5px solid var(--border); font-weight: 500;
+    border-bottom: 0.5px solid var(--border2); font-weight: 600;
   }
   .pace-table td {
     padding: 8px 8px; font-size: 12px; color: var(--text2);
     border-bottom: 0.5px solid var(--border);
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: tabular-nums; font-weight: 500;
   }
   .pace-table tr:last-child td { border-bottom: none; }
   .pace-table tr:hover td { background: var(--bg3); }
@@ -1234,15 +1235,22 @@ function renderKPIs(d) {
   set('k-rev-sub',  '₹' + d.revAchieved.toFixed(1) + ' Cr of ₹' + d.revTarget + ' Cr');
   set('k-unit-pct', unitPct + '%');
   set('k-unit-sub', d.unitsAchieved + ' of ' + d.unitsTarget + ' target');
-  set('k-pace',     d.weeklyRate + '/wk');
   set('k-recovery', '₹0');
   set('k-conv',     d.convRate + '%');
   set('k-burn',     '₹' + d.zeroSaleBurn);
 
-  // Year-end forecast at current rate: 99 + (12.4 * 4.3 * 10) ≈ units; simpler: units/8wks * 52wks
-  const weeklyBookings = d.weeks ? d.weeks.reduce((a,w) => a + w.actual, 0) / d.weeks.length : d.weeklyRate;
-  const forecastUnits = Math.round(d.unitsAchieved + weeklyBookings * 10 * 4.3);
-  const forecastRev = (forecastUnits * (d.revAchieved / d.unitsAchieved)).toFixed(0);
+  // Compute actual weekly run rate from weeks data (sanitised — ignore pacer summary rows)
+  const weeksData = (d.weeks || STATIC.weeks).filter(w =>
+    w.week && String(w.week).match(/Wk|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i) &&
+    Number(w.actual) < 500
+  );
+  const weeklyRunRate = weeksData.length
+    ? (weeksData.reduce((s,w) => s + Number(w.actual), 0) / weeksData.length).toFixed(1)
+    : '12.4';
+  set('k-pace', weeklyRunRate + '/wk');
+
+  // Year-end forecast based on computed run rate
+  const forecastUnits = Math.round(d.unitsAchieved + parseFloat(weeklyRunRate) * 4.3 * 10);
   set('k-forecast', '~₹' + Math.round(d.revAchieved / d.unitsAchieved * forecastUnits) + ' Cr');
 
   const activeSales = d.team ? d.team.filter(t => t.units > 0).length : 15;
@@ -1274,8 +1282,8 @@ function renderCharts(d) {
       }
     },
     scales: {
-      x: { ticks: { color: '#9a97a0', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.08)' } },
-      y: { ticks: { color: '#9a97a0', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.08)' } }
+      x: { ticks: { color: '#4a4a50', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.08)' } },
+      y: { ticks: { color: '#4a4a50', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.08)' } }
     }
   };
 
@@ -1375,8 +1383,8 @@ function renderCharts(d) {
       datasets: [{ label: 'BSP (₹/sqft)', data: bspProjs.map(p => p.bsp), backgroundColor: '#4a90d4', borderRadius: 3 }]
     },
     options: { ...chartDefaults, indexAxis: 'y', scales: {
-      x: { ticks: { color: '#9a97a0', font: { size: 11 }, callback: v => '₹' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.08)' } },
-      y: { ticks: { color: '#5a5760', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.08)' } }
+      x: { ticks: { color: '#4a4a50', font: { size: 11 }, callback: v => '₹' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.08)' } },
+      y: { ticks: { color: '#2c2c30', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.08)' } }
     }}
   });
 }
@@ -1519,30 +1527,83 @@ function renderTeam(d) {
 // ──────────────────────────────────────────────────────────────
 // PACE
 function renderPace(d) {
-  const weeks = d.weeks || STATIC.weeks;
-  set('p-runrate', d.weeklyRate);
-  set('p-required', d.requiredRate || 45.5);
+  // Sanity check weeks — valid week rows have a 'week' label like "Wk1 Apr"
+  // and actual/target values both under 200. If data looks like pacer summary
+  // rows (Annual Target=2070 etc.) fall back to STATIC.
+  const rawWeeks = d.weeks || [];
+  const validWeeks = rawWeeks.filter(w =>
+    w.week && String(w.week).match(/Wk|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i) &&
+    Number(w.actual) < 500 && Number(w.target) < 500
+  );
+  const weeks = validWeeks.length >= 2 ? validWeeks : STATIC.weeks;
+
+  // weeklyRate from live data may be the "Required/month" value (197.1).
+  // Real run rate = total actual bookings ÷ number of weeks tracked.
+  const totalActual = weeks.reduce((s, w) => s + Number(w.actual), 0);
+  const weekCount   = weeks.length || 1;
+  const computedRate = (totalActual / weekCount).toFixed(1);
+
+  // requiredRate: if the live value looks like months-remaining (≤12) it's wrong — use 45.5
+  const liveRequired = Number(d.requiredRate);
+  const safeRequired = (liveRequired > 12 && liveRequired < 500) ? liveRequired : 45.5;
+
+  set('p-runrate',   computedRate);
+  set('p-required',  safeRequired);
   set('p-remaining', (d.unitsTarget - d.unitsAchieved).toLocaleString('en-IN'));
+
+  // Also fix the Overview KPI card
+  set('k-pace', computedRate + '/wk');
 
   let cum = 0, cumTarget = 0;
   document.getElementById('paceTableBody').innerHTML = weeks.map(w => {
-    cum += w.actual;
-    cumTarget += w.target;
+    cum += Number(w.actual);
+    cumTarget += Number(w.target);
     const gap = cum - cumTarget;
-    const pct = Math.round(w.actual / w.target * 100);
-    const rag = pct >= 80 ? `<span class="pill pill-green">On Track</span>` : pct >= 40 ? `<span class="pill pill-amber">Behind</span>` : `<span class="pill pill-red">Far Behind</span>`;
+    const pct = Math.round(Number(w.actual) / Number(w.target) * 100);
+    const rag = pct >= 80
+      ? `<span class="pill pill-green">On Track</span>`
+      : pct >= 40
+      ? `<span class="pill pill-amber">Behind</span>`
+      : `<span class="pill pill-red">Far Behind</span>`;
     return `<tr>
       <td style="font-weight:500;color:var(--text);">${w.week}</td>
-      <td>${w.period}</td>
-      <td class="num" style="color:${w.actual >= w.target ? '#4ea86b' : '#e05555'}">${w.actual}</td>
+      <td>${w.period || ''}</td>
+      <td class="num" style="color:${Number(w.actual) >= Number(w.target) ? '#2e8a50' : '#c93333'}">${w.actual}</td>
       <td class="num" style="color:var(--text3)">${w.target}</td>
-      <td class="num" style="color:${w.actual >= w.target ? '#4ea86b' : '#e05555'}">${w.actual - w.target > 0 ? '+' : ''}${w.actual - w.target}</td>
+      <td class="num" style="color:${Number(w.actual) >= Number(w.target) ? '#2e8a50' : '#c93333'}">${Number(w.actual) - Number(w.target) > 0 ? '+' : ''}${Number(w.actual) - Number(w.target)}</td>
       <td class="num">${pct}%</td>
       <td class="num">${cum}</td>
       <td class="num" style="color:var(--red)">${gap}</td>
       <td>${rag}</td>
     </tr>`;
   }).join('');
+
+  // Rebuild pace chart with clean data
+  if (charts.pace) { charts.pace.destroy(); delete charts.pace; }
+  const paceCanvas = document.getElementById('paceChart');
+  if (paceCanvas) {
+    charts.pace = new Chart(paceCanvas, {
+      type: 'bar',
+      data: {
+        labels: weeks.map(w => w.week),
+        datasets: [
+          { label: 'Actual bookings', data: weeks.map(w => Number(w.actual)), backgroundColor: '#b52525', borderRadius: 4, order: 1 },
+          { label: 'Weekly target',   data: weeks.map(w => Number(w.target)), type: 'line', borderColor: '#9a97a0', borderDash: [5,4], pointRadius: 0, borderWidth: 1.5, fill: false, order: 0 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { backgroundColor:'#ffffff', borderColor:'#e0e0e4', borderWidth:1, titleColor:'#1a1a1f', bodyColor:'#5a5760', padding:10 }
+        },
+        scales: {
+          x: { ticks: { color:'#4a4a50', font:{ size:11 } }, grid:{ color:'rgba(0,0,0,0.05)' }, border:{ color:'rgba(0,0,0,0.08)' } },
+          y: { ticks: { color:'#4a4a50', font:{ size:11 } }, grid:{ color:'rgba(0,0,0,0.05)' }, border:{ color:'rgba(0,0,0,0.08)' }, beginAtZero: true }
+        }
+      }
+    });
+  }
 }
 
 // ──────────────────────────────────────────────────────────────
