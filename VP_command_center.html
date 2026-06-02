@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mangalam Landmarks — VP Command Center</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --bg2: #161616;
+    --bg3: #1e1e1e;
+    --bg4: #252525;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0ede8;
+    --text2: #9a9591;
+    --text3: #5e5b58;
+    --gold: #c9a84c;
+    --gold2: #e8c97a;
+    --red: #e05555;
+    --red-bg: rgba(224,85,85,0.1);
+    --amber: #d4843a;
+    --amber-bg: rgba(212,132,58,0.1);
+    --green: #4ea86b;
+    --green-bg: rgba(78,168,107,0.1);
+    --blue: #4a90d4;
+    --blue-bg: rgba(74,144,212,0.1);
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ─── TOP NAV ─── */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,15,15,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 28px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: var(--gold);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #0f0f0f;
+    letter-spacing: -0.5px;
+  }
+  .topbar-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .topbar-sub { font-size: 11px; color: var(--text3); margin-left: 4px; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .sync-status {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--text3);
+  }
+  .sync-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text3);
+    animation: pulse 2s infinite;
+  }
+  .sync-dot.live { background: var(--green); }
+  .sync-dot.error { background: var(--red); animation: none; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .refresh-btn {
+    padding: 5px 12px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text2);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .refresh-btn:hover { background: var(--bg3); color: var(--text); }
+  .refresh-btn.loading { pointer-events: none; opacity: 0.5; }
+
+  /* ─── NAV TABS ─── */
+  .nav-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 12px 28px;
+    border-bottom: 0.5px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    padding: 6px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--text3);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .nav-tab:hover { color: var(--text2); background: var(--bg3); }
+  .nav-tab.active { color: var(--gold); background: rgba(201,168,76,0.1); }
+
+  /* ─── MAIN LAYOUT ─── */
+  .main { padding: 24px 28px; max-width: 1400px; }
+
+  /* ─── PAGE SECTIONS ─── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ─── SECTION HEADER ─── */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+
+  /* ─── KPI GRID ─── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .kpi-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .kpi-card:hover { border-color: var(--border2); }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--kpi-accent, transparent);
+    border-radius: 10px 10px 0 0;
+  }
+  .kpi-card.danger { --kpi-accent: var(--red); }
+  .kpi-card.warn   { --kpi-accent: var(--amber); }
+  .kpi-card.ok     { --kpi-accent: var(--green); }
+  .kpi-card.gold   { --kpi-accent: var(--gold); }
+
+  .kpi-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; letter-spacing: 0.02em; }
+  .kpi-value { font-size: 26px; font-weight: 600; line-height: 1; margin-bottom: 6px; }
+  .kpi-card.danger .kpi-value { color: var(--red); }
+  .kpi-card.warn   .kpi-value { color: var(--amber); }
+  .kpi-card.ok     .kpi-value { color: var(--green); }
+  .kpi-card.gold   .kpi-value { color: var(--gold2); }
+  .kpi-sub { font-size: 11px; color: var(--text3); }
+
+  /* ─── GRID LAYOUTS ─── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .grid-3-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+  /* ─── CARD ─── */
+  .card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    overflow: hidden;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 16px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  /* ─── ALERT CARDS ─── */
+  .alert-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .alert-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    transition: border-color 0.15s;
+  }
+  .alert-card:hover { border-color: var(--border2); }
+  .alert-card.p1 { border-left: 3px solid var(--red); }
+  .alert-card.p2 { border-left: 3px solid var(--amber); }
+  .alert-card.win { border-left: 3px solid var(--green); }
+  .alert-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+  .alert-body { flex: 1; }
+  .alert-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .alert-desc { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .alert-action {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .action-red   { background: var(--red-bg);   color: var(--red);   }
+  .action-amber { background: var(--amber-bg); color: var(--amber); }
+  .action-green { background: var(--green-bg); color: var(--green); }
+  .alert-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 1px;
+  }
+  .badge-p1  { background: var(--red-bg);   color: var(--red);   }
+  .badge-p2  { background: var(--amber-bg); color: var(--amber); }
+  .badge-win { background: var(--green-bg); color: var(--green); }
+
+  /* ─── BAR ROWS ─── */
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .bar-label { font-size: 12px; color: var(--text2); min-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-track { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+  .bar-fill  { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.25,1,0.5,1); }
+  .bar-val   { font-size: 11px; color: var(--text3); min-width: 40px; text-align: right; }
+
+  /* ─── TEAM TABLE ─── */
+  .team-table { width: 100%; border-collapse: collapse; }
+  .team-table th {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 0 8px 10px;
+    text-align: left;
+    border-bottom: 0.5px solid var(--border);
+    font-weight: 500;
+  }
+  .team-table td {
+    padding: 9px 8px;
+    font-size: 12px;
+    color: var(--text2);
+    border-bottom: 0.5px solid var(--border);
+  }
+  .team-table tr:last-child td { border-bottom: none; }
+  .team-table tr:hover td { background: var(--bg3); }
+  .team-table td.name { color: var(--text); font-weight: 500; }
+  .team-table td.num  { text-align: right; font-variant-numeric: tabular-nums; }
+  .team-table td.good { color: var(--green); }
+  .team-table td.warn { color: var(--amber); }
+  .team-table td.bad  { color: var(--red);   }
+
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .pill-green { background: var(--green-bg); color: var(--green); }
+  .pill-red   { background: var(--red-bg);   color: var(--red);   }
+  .pill-amber { background: var(--amber-bg); color: var(--amber); }
+  .pill-gold  { background: rgba(201,168,76,0.15); color: var(--gold2); }
+  .pill-blue  { background: var(--blue-bg);  color: var(--blue);  }
+  .pill-gray  { background: var(--bg4);      color: var(--text3); }
+
+  /* ─── SCENARIO ─── */
+  .scenario-display {
+    text-align: center;
+    padding: 16px 0 20px;
+  }
+  .scenario-num {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+    transition: color 0.3s;
+  }
+  .scenario-sub { font-size: 13px; color: var(--text3); }
+  .scenario-rows { margin-top: 16px; }
+  .scenario-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 12px;
+  }
+  .scenario-row:last-child { border-bottom: none; }
+  .scenario-row .slabel { color: var(--text3); }
+  .scenario-row .sval   { font-weight: 600; color: var(--text); }
+  .scenario-row .sval.ok   { color: var(--green); }
+  .scenario-row .sval.warn { color: var(--amber); }
+  .scenario-row .sval.bad  { color: var(--red); }
+
+  .slider-wrap { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+  .slider-wrap label { font-size: 11px; color: var(--text3); white-space: nowrap; }
+  input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 4px;
+    background: var(--bg4);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+  }
+  .slider-val { font-size: 12px; font-weight: 600; color: var(--gold2); min-width: 28px; text-align: right; }
+
+  /* ─── RECOVERY METER ─── */
+  .recovery-meter {
+    height: 12px;
+    background: var(--bg4);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 12px 0 8px;
+  }
+  .recovery-fill {
+    height: 100%;
+    border-radius: 6px;
+    background: var(--red);
+    transition: width 0.8s;
+  }
+
+  /* ─── LOADING ─── */
+  .loading-screen {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    gap: 20px;
+    transition: opacity 0.3s;
+  }
+  .loading-logo {
+    width: 48px; height: 48px;
+    background: var(--gold);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 800; color: #0f0f0f;
+  }
+  .loading-text { font-size: 13px; color: var(--text3); }
+  .loading-bar-wrap {
+    width: 180px; height: 2px;
+    background: var(--bg4);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  .loading-bar {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 1px;
+    animation: loadbar 1.8s ease-in-out infinite;
+  }
+  @keyframes loadbar { 0% { width:0; margin-left:0; } 60% { width:100%; margin-left:0; } 100% { width:0; margin-left:100%; } }
+
+  /* ─── ERROR BANNER ─── */
+  .error-banner {
+    background: var(--red-bg);
+    border: 0.5px solid rgba(224,85,85,0.3);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--red);
+    margin-bottom: 20px;
+    display: none;
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider { height: 0.5px; background: var(--border); margin: 24px 0; }
+
+  /* ─── CHART WRAPPER ─── */
+  .chart-wrap { position: relative; width: 100%; }
+
+  /* ─── WEEKLY PACE TABLE ─── */
+  .pace-table { width: 100%; border-collapse: collapse; }
+  .pace-table th {
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text3); padding: 0 8px 10px; text-align: left;
+    border-bottom: 0.5px solid var(--border); font-weight: 500;
+  }
+  .pace-table td {
+    padding: 8px 8px; font-size: 12px; color: var(--text2);
+    border-bottom: 0.5px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  .pace-table tr:last-child td { border-bottom: none; }
+  .pace-table tr:hover td { background: var(--bg3); }
+
+  /* ─── PIP TRACKER ─── */
+  .pip-card {
+    background: var(--red-bg);
+    border: 0.5px solid rgba(224,85,85,0.2);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+  }
+  .pip-title { font-size: 12px; font-weight: 600; color: var(--red); margin-bottom: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    .grid-2, .grid-3, .grid-3-1 { grid-template-columns: 1fr; }
+    .main { padding: 16px; }
+    .topbar { padding: 0 16px; }
+    .nav-tabs { padding: 8px 16px; }
+  }
+
+  /* ─── TOOLTIP ─── */
+  .tooltip-label {
+    background: var(--bg4) !important;
+    border: 0.5px solid var(--border2) !important;
+    color: var(--text) !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    font-family: 'Inter', sans-serif !important;
+  }
+
+  /* ─── LAST UPDATED ─── */
+  .last-updated { font-size: 11px; color: var(--text3); }
+
+  /* ─── CHART LEGEND ─── */
+  .chart-legend { display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text3); }
+  .legend-dot  { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* ─── PROJECT MATRIX ─── */
+  .matrix-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .matrix-cell {
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    border: 0.5px solid var(--border);
+  }
+  .matrix-cell.hit   { background: var(--green-bg); border-color: rgba(78,168,107,0.2); }
+  .matrix-cell.mid   { background: var(--amber-bg); border-color: rgba(212,132,58,0.2); }
+  .matrix-cell.low   { background: var(--red-bg);   border-color: rgba(224,85,85,0.2); }
+  .matrix-cell.zero  { background: var(--bg3);      }
+  .mc-name { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+  .mc-pct  { font-size: 20px; font-weight: 700; line-height: 1; }
+  .mc-rev  { font-size: 10px; color: var(--text3); margin-top: 4px; }
+  .matrix-cell.hit  .mc-pct { color: var(--green); }
+  .matrix-cell.mid  .mc-pct { color: var(--amber); }
+  .matrix-cell.low  .mc-pct { color: var(--red);   }
+  .matrix-cell.zero .mc-pct { color: var(--text3); }
+
+  @media (max-width: 700px) { .matrix-grid { grid-template-columns: repeat(2, 1fr); } }
+
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-logo">ML</div>
+  <div class="loading-text" id="loadingText">Connecting to Google Sheets…</div>
+  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+</div>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-mark">ML</div>
+    <span class="topbar-title">CEO Command Center</span>
+    <span class="topbar-sub">FY 2025–26</span>
+  </div>
+  <div class="topbar-right">
+    <div class="sync-status">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">Loading…</span>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" onclick="fetchAllData()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.01"/></svg>
+      Refresh
+    </button>
+    <span class="last-updated" id="lastUpdated"></span>
+  </div>
+</div>
+
+<!-- Nav Tabs -->
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="showPage('overview')">Overview</button>
+  <button class="nav-tab" onclick="showPage('briefing')">Morning Brief</button>
+  <button class="nav-tab" onclick="showPage('portfolio')">Portfolio</button>
+  <button class="nav-tab" onclick="showPage('team')">Team ROI</button>
+  <button class="nav-tab" onclick="showPage('pace')">Booking Pace</button>
+  <button class="nav-tab" onclick="showPage('recovery')">Collections</button>
+  <button class="nav-tab" onclick="showPage('leads')">Lead Intelligence</button>
+</div>
+
+<div class="main">
+  <div class="error-banner" id="errorBanner"></div>
+
+  <!-- ══════════════════════════════════
+       PAGE: OVERVIEW
+  ══════════════════════════════════════ -->
+  <div class="page active" id="page-overview">
+
+    <div class="section-header" style="margin-bottom:16px;">
+      <span class="section-title">Annual Plan — Health at a Glance</span>
+    </div>
+
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi-card danger">
+        <div class="kpi-label">Revenue Achieved</div>
+        <div class="kpi-value" id="k-rev-pct">—</div>
+        <div class="kpi-sub" id="k-rev-sub">of ₹1,313 Cr target</div>
+      </div>
+      <div class="kpi-card danger">
+        <div class="kpi-label">Units Achieved</div>
+        <div class="kpi-value" id="k-unit-pct">—</div>
+        <div class="kpi-sub" id="k-unit-sub">of 2,070 target</div>
+      </div>
+      <div class="kpi-card danger">
+        <div class="kpi-label">Booking Pace</div>
+        <div class="kpi-value" id="k-pace">—</div>
+        <div class="kpi-sub" id="k-pace-sub">Need 45.5/wk</div>
+      </div>
+      <div class="kpi-card danger">
+        <div class="kpi-label">Collections Logged</div>
+        <div class="kpi-value" id="k-recovery">—</div>
+        <div class="kpi-sub" id="k-recovery-sub">of ₹961 Cr target</div>
+      </div>
+      <div class="kpi-card warn">
+        <div class="kpi-label">Year-End Forecast</div>
+        <div class="kpi-value" id="k-forecast">—</div>
+        <div class="kpi-sub">At current run rate</div>
+      </div>
+      <div class="kpi-card ok">
+        <div class="kpi-label">Booking Conv. Rate</div>
+        <div class="kpi-value" id="k-conv">—</div>
+        <div class="kpi-sub">Lead quality strong</div>
+      </div>
+      <div class="kpi-card gold">
+        <div class="kpi-label">Active Salespeople</div>
+        <div class="kpi-value" id="k-team">—</div>
+        <div class="kpi-sub" id="k-team-sub">of 21 total</div>
+      </div>
+      <div class="kpi-card danger">
+        <div class="kpi-label">Zero-Sale CTC Burn</div>
+        <div class="kpi-value" id="k-burn">—</div>
+        <div class="kpi-sub">L/yr · ₹0 revenue</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Revenue chart -->
+      <div class="card">
+        <div class="card-title">Revenue Achieved vs Target (₹ Cr)</div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#4a90d4;"></div>Achieved</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#252525;"></div>Target</div>
+        </div>
+        <div class="chart-wrap" style="height:200px;">
+          <canvas id="revChart" role="img" aria-label="Revenue achieved vs target by project"></canvas>
+        </div>
+      </div>
+      <!-- Units chart -->
+      <div class="card">
+        <div class="card-title">Units Sold vs Target — Top Projects</div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#4ea86b;"></div>Sold</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#252525;"></div>Target</div>
+        </div>
+        <div class="chart-wrap" style="height:200px;">
+          <canvas id="unitChart" role="img" aria-label="Units sold vs target by project"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <!-- Weekly trend -->
+      <div class="card" style="grid-column: span 2;">
+        <div class="card-title">Weekly Booking Trend</div>
+        <div class="chart-wrap" style="height:180px;">
+          <canvas id="weeklyChart" role="img" aria-label="Weekly bookings vs target"></canvas>
+        </div>
+      </div>
+      <!-- Lead source donut -->
+      <div class="card">
+        <div class="card-title">Bookings by Lead Source</div>
+        <div class="chart-wrap" style="height:140px;">
+          <canvas id="leadChart" role="img" aria-label="Bookings breakdown by lead source"></canvas>
+        </div>
+        <div id="leadLegend" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: MORNING BRIEF
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-briefing">
+    <div class="section-header">
+      <span class="section-title">CEO Morning Brief — Decisions Needed</span>
+      <span class="last-updated" id="briefDate"></span>
+    </div>
+
+    <div class="alert-list" id="alertList">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-header"><span class="section-title">What's Working</span></div>
+    <div class="alert-list" id="winList"></div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: PORTFOLIO
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-portfolio">
+    <div class="section-header">
+      <span class="section-title">Portfolio Health — 16 Projects</span>
+    </div>
+
+    <div class="matrix-grid" id="portfolioMatrix"></div>
+
+    <div class="divider"></div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Revenue Achievement % by Project</div>
+        <div id="projBars"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Year-End Scenario Simulator</div>
+        <div class="scenario-display">
+          <div class="scenario-num" id="scnNum">599</div>
+          <div class="scenario-sub" id="scnSub">28.9% of 2,070 target</div>
+        </div>
+        <div class="slider-wrap">
+          <label>Bookings/month</label>
+          <input type="range" min="10" max="350" value="50" step="5" id="scnSlider" oninput="updateScenario(this.value)">
+          <span class="slider-val" id="scnVal">50</span>
+        </div>
+        <div class="scenario-rows">
+          <div class="scenario-row">
+            <span class="slabel">Needed to hit target</span>
+            <span class="sval">200/mo</span>
+          </div>
+          <div class="scenario-row">
+            <span class="slabel">Current run rate</span>
+            <span class="sval bad">~50/mo</span>
+          </div>
+          <div class="scenario-row">
+            <span class="slabel">Gap to close</span>
+            <span class="sval bad" id="scnGap">150/mo</span>
+          </div>
+          <div class="scenario-row">
+            <span class="slabel">Revenue if hit</span>
+            <span class="sval" id="scnRevForecast">₹—</span>
+          </div>
+          <div class="scenario-row">
+            <span class="slabel">Feasibility</span>
+            <span class="sval bad" id="scnFeas">Shortfall</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">BSP Benchmark — Avg ₹/sqft by Project</div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="bspChart" role="img" aria-label="BSP by project bar chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: TEAM ROI
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-team">
+    <div class="section-header">
+      <span class="section-title">Team ROI — CEO View</span>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Full Team Scorecard</div>
+        <div style="overflow-x: auto;">
+          <table class="team-table" id="teamTable">
+            <thead>
+              <tr>
+                <th>Salesperson</th>
+                <th>Cluster</th>
+                <th>Units</th>
+                <th>Revenue (₹Cr)</th>
+                <th>Rev per ₹1 CTC</th>
+                <th>CTC/yr (₹L)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="teamTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="card">
+          <div class="card-title">Revenue per ₹1 CTC — Top Performers</div>
+          <div class="chart-wrap" style="height:200px;">
+            <canvas id="roiChart" role="img" aria-label="Revenue per rupee CTC for each salesperson"></canvas>
+          </div>
+        </div>
+
+        <div class="pip-card">
+          <div class="pip-title">⚠ Zero-Sale CTC Burn — Action Required</div>
+          <div id="pipList"></div>
+          <div style="margin-top:12px; padding: 10px 12px; background: rgba(224,85,85,0.05); border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; color:var(--text3);">Total annual burn</span>
+            <span style="font-size:16px; font-weight:700; color:var(--red);" id="totalBurn">₹39.85 L/yr</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: BOOKING PACE
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-pace">
+    <div class="section-header">
+      <span class="section-title">Booking Pace — Weekly Tracker</span>
+    </div>
+
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="kpi-card danger">
+        <div class="kpi-label">Current Run Rate</div>
+        <div class="kpi-value" id="p-runrate">12.4</div>
+        <div class="kpi-sub">bookings/week</div>
+      </div>
+      <div class="kpi-card danger">
+        <div class="kpi-label">Required Rate</div>
+        <div class="kpi-value" id="p-required">45.5</div>
+        <div class="kpi-sub">bookings/week</div>
+      </div>
+      <div class="kpi-card danger">
+        <div class="kpi-label">Remaining Target</div>
+        <div class="kpi-value" id="p-remaining">1,971</div>
+        <div class="kpi-sub">units to sell</div>
+      </div>
+      <div class="kpi-card warn">
+        <div class="kpi-label">Months Remaining</div>
+        <div class="kpi-value" id="p-months">10</div>
+        <div class="kpi-sub">in FY 2025–26</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title">Weekly Bookings vs Target</div>
+      <div class="chart-wrap" style="height:250px;">
+        <canvas id="paceChart" role="img" aria-label="Weekly bookings vs target line chart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Week-by-Week Detail</div>
+      <div style="overflow-x:auto;">
+        <table class="pace-table" id="paceTable">
+          <thead>
+            <tr>
+              <th>Week</th>
+              <th>Period</th>
+              <th>Actual</th>
+              <th>Target</th>
+              <th>vs Target</th>
+              <th>% Hit</th>
+              <th>Cumulative</th>
+              <th>Cum Gap</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="paceTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: COLLECTIONS
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-recovery">
+    <div class="section-header">
+      <span class="section-title">Collections & Recovery — Cash Flow Intelligence</span>
+    </div>
+
+    <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom:20px;">
+      <div class="kpi-card danger">
+        <div class="kpi-label">Total Recovery Target</div>
+        <div class="kpi-value">₹961 Cr</div>
+        <div class="kpi-sub">Across 16 projects</div>
+      </div>
+      <div class="kpi-card danger">
+        <div class="kpi-label">Payments Logged</div>
+        <div class="kpi-value">₹0</div>
+        <div class="kpi-sub">0% of target tracked</div>
+      </div>
+      <div class="kpi-card warn">
+        <div class="kpi-label">Revenue Booked (not collected)</div>
+        <div class="kpi-value" id="r-booked">₹56.9 Cr</div>
+        <div class="kpi-sub">From 99 bookings</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px; border: 0.5px solid rgba(224,85,85,0.3); background: var(--red-bg);">
+      <div style="font-size:13px; font-weight:600; color:var(--red); margin-bottom:8px;">
+        ⚠ Recovery Log Empty — Immediate Action Required
+      </div>
+      <div style="font-size:12px; color:var(--text2); line-height:1.7;">
+        The Combined_Recovery_Log shows a #REF! error — no payment entries have been made across all 16 projects. ₹961 Cr in recovery targets exist on paper. If 10% of this has been received, ₹96 Cr in cash is untracked. <strong style="color:var(--text);">Mandate weekly Friday collection entries from all project heads.</strong>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Recovery Target by Project — Priority View</div>
+      <div id="recoveryBars"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: LEAD INTELLIGENCE
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-leads">
+    <div class="section-header">
+      <span class="section-title">Lead Source Intelligence & Channel Performance</span>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Bookings by Source — Conversion Rate</div>
+        <div id="leadSourceBars"></div>
+        <div style="margin-top:14px; padding:10px 12px; background:var(--blue-bg); border-radius:6px; font-size:11px; color:var(--blue); line-height:1.6;">
+          Channel Partners drive 50.5% of all bookings at 96.2% conversion. Scaling the CP network is the single highest-ROI lever available to the team.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Channel Partner Intelligence</div>
+        <div class="kpi-grid" style="grid-template-columns: 1fr 1fr; margin-bottom:12px;">
+          <div class="kpi-card ok">
+            <div class="kpi-label">CP Bookings</div>
+            <div class="kpi-value" style="font-size:20px;">50</div>
+            <div class="kpi-sub">50.5% of total</div>
+          </div>
+          <div class="kpi-card ok">
+            <div class="kpi-label">CP Conv. Rate</div>
+            <div class="kpi-value" style="font-size:20px;">96.2%</div>
+            <div class="kpi-sub">2 lost from 52 leads</div>
+          </div>
+        </div>
+        <div style="font-size:12px; color:var(--text3); margin-bottom:8px; letter-spacing:0.05em; text-transform:uppercase; font-size:10px;">CEO Recommendation</div>
+        <div style="font-size:12px; color:var(--text2); line-height:1.7;">
+          Krushna runs the best CP playbook in the team — 15 units all through Channel Partners. Document his outreach process, onboarding flow, and follow-up cadence. Roll it out to all Prashant cluster reps within 30 days to unlock the same results at Midas City and Aikyam.
+        </div>
+        <div class="divider"></div>
+        <div style="font-size:12px; color:var(--text2); line-height:1.7;">
+          <strong style="color:var(--text);">Digital at 5.1% of bookings</strong> — with 100% conversion when it generates a lead, this channel is underinvested. Even ₹5–10 L/month in targeted digital spend could yield 10–15 additional bookings.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">Recent Bookings — Sales Log</div>
+      <div style="overflow-x:auto;">
+        <table class="team-table" id="salesLogTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Salesperson</th>
+              <th>Client</th>
+              <th>Project</th>
+              <th>Flat No.</th>
+              <th>Revenue (₹L)</th>
+              <th>BSP</th>
+              <th>Lead Source</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="salesLogBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .main -->
+
+<!-- ══════════════════════════════════
+     CONFIG — EDIT THESE
+══════════════════════════════════════ -->
+<script>
+// ─── CONFIGURATION ───────────────────────────────────────────
+const CONFIG = {
+  // Your VP Master Dashboard Sheet ID
+  SHEET_ID: '1CDbbnFDMfJW2Bn3m4qwNtFCfJvlDDx0ztl6kXFvALV4',
+
+  // Apps Script Web App URL (deploy your relay script here)
+  // See README below for how to set this up
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxk8hQQB3mnFOBMpE_VlDjxIAFiOUju5NDCd9TrfK7UKGpLfVYc-Xx5WNQm3N5FwyG3OA/exec',
+
+  // Sheet tab names (must match exactly)
+  SHEETS: {
+    overview:    '📊 Overview',
+    trends:      '📈 Sales Trends',
+    pnl:         '💰 P&L',
+    funnel:      '🔍 Funnel & CPV',
+    cancels:     '❌ Cancellations',
+    pacer:       '📅 Weekly Pacer',
+    recovery:    '🏦 Recovery Log',
+    team:        '👥 Team Scorecard',
+    cost:        '⚙️ Cost Analytics',
+    alerts:      '⚠️ Alerts',
+    salesLog:    'Combined_Sales_Log',
+  }
+};
+
+// ─── STATIC DATA (used as fallback when offline) ──────────────
+const STATIC = {
+  revAchieved: 56.9,
+  revTarget: 1313,
+  unitsAchieved: 99,
+  unitsTarget: 2070,
+  weeklyRate: 12.4,
+  requiredRate: 45.5,
+  convRate: 98.0,
+  zeroSaleBurn: 39.85,
+
+  projects: [
+    { name: 'Lifepark',       uTarget:7,   uSold:19,  revTarget:2,    revAch:8.65,  bsp:4984, priority:'Low'  },
+    { name: 'Breeze',         uTarget:19,  uSold:0,   revTarget:3.65, revAch:0,     bsp:0,    priority:'Low'  },
+    { name: 'Melizma',        uTarget:18,  uSold:8,   revTarget:8,    revAch:4.91,  bsp:5952, priority:'Low'  },
+    { name: 'Miraya',         uTarget:40,  uSold:0,   revTarget:31,   revAch:0,     bsp:0,    priority:'Low'  },
+    { name: 'Marvel',         uTarget:36,  uSold:16,  revTarget:20,   revAch:8.19,  bsp:4646, priority:'Low'  },
+    { name: 'Icon',           uTarget:8,   uSold:0,   revTarget:5,    revAch:0,     bsp:0,    priority:'Low'  },
+    { name: 'Niyoshi',        uTarget:11,  uSold:1,   revTarget:14,   revAch:1.91,  bsp:12315,priority:'Low'  },
+    { name: 'Shyni',          uTarget:45,  uSold:7,   revTarget:31,   revAch:4.98,  bsp:7014, priority:'Low'  },
+    { name: 'Midas City',     uTarget:300, uSold:15,  revTarget:169,  revAch:8.32,  bsp:5096, priority:'High' },
+    { name: 'Aikyam',         uTarget:200, uSold:17,  revTarget:162,  revAch:12.98, bsp:6651, priority:'High' },
+    { name: 'Mithila-1',      uTarget:86,  uSold:16,  revTarget:32,   revAch:7.01,  bsp:4846, priority:'Low'  },
+    { name: 'Mithila-2',      uTarget:200, uSold:0,   revTarget:110,  revAch:0,     bsp:0,    priority:'High' },
+    { name: 'Myra',           uTarget:100, uSold:0,   revTarget:53,   revAch:0,     bsp:0,    priority:'Medium'},
+    { name: 'Starview',       uTarget:400, uSold:0,   revTarget:278,  revAch:0,     bsp:0,    priority:'High' },
+    { name: 'Momento',        uTarget:300, uSold:0,   revTarget:209,  revAch:0,     bsp:0,    priority:'High' },
+    { name: 'Borhadewadi-1',  uTarget:300, uSold:0,   revTarget:185,  revAch:0,     bsp:0,    priority:'High' },
+  ],
+
+  team: [
+    { name:'Krushna',       cluster:'Prashant', units:15, revenue:7.70,  ctc:5.76,  roi:133.72 },
+    { name:'Mayur Anarse',  cluster:'Shivaji',  units:13, revenue:5.90,  ctc:5.14,  roi:114.88 },
+    { name:'Sachin',        cluster:'Prashant', units:10, revenue:6.71,  ctc:5.52,  roi:121.53 },
+    { name:'Disha',         cluster:'Shivaji',  units:7,  revenue:2.92,  ctc:4.56,  roi:63.99  },
+    { name:'Pranjali',      cluster:'Shivaji',  units:6,  revenue:3.23,  ctc:4.43,  roi:72.96  },
+    { name:'Suvarna',       cluster:'Shivaji',  units:6,  revenue:2.70,  ctc:5.28,  roi:51.13  },
+    { name:'Shilpee',       cluster:'Prashant', units:4,  revenue:3.01,  ctc:4.68,  roi:64.32  },
+    { name:'Ankit',         cluster:'Prashant', units:5,  revenue:3.54,  ctc:7.08,  roi:50.03  },
+    { name:'Vrushali',      cluster:'Shivaji',  units:5,  revenue:2.86,  ctc:5.28,  roi:54.16  },
+    { name:'Mayur Chavhan', cluster:'Prashant', units:4,  revenue:3.00,  ctc:5.16,  roi:58.18  },
+    { name:'Rutuja',        cluster:'Shivaji',  units:4,  revenue:2.05,  ctc:7.49,  roi:27.34  },
+    { name:'Avinash',       cluster:'Prashant', units:3,  revenue:2.20,  ctc:5.42,  roi:40.64  },
+    { name:'Prince',        cluster:'Prashant', units:2,  revenue:1.76,  ctc:6.84,  roi:25.77  },
+    { name:'Asha',          cluster:'Prashant', units:1,  revenue:0.49,  ctc:6.34,  roi:7.68   },
+    { name:'Sujata',        cluster:'Prashant', units:1,  revenue:0.81,  ctc:5.28,  roi:15.30  },
+    { name:'Subham',        cluster:'Shivaji',  units:0,  revenue:0,     ctc:5.15,  roi:0      },
+    { name:'Priyanka',      cluster:'Shivaji',  units:0,  revenue:0,     ctc:5.57,  roi:0      },
+    { name:'Vikash',        cluster:'Prashant', units:0,  revenue:0,     ctc:7.68,  roi:0      },
+    { name:'Himanshu',      cluster:'Shivaji',  units:0,  revenue:0,     ctc:6.82,  roi:0      },
+    { name:'Ketan',         cluster:'Prashant', units:0,  revenue:0,     ctc:6.96,  roi:0      },
+    { name:'Ajay',          cluster:'Shivaji',  units:0,  revenue:0,     ctc:7.68,  roi:0      },
+  ],
+
+  weeks: [
+    { week:'Wk1 Apr', period:'01–07 Apr', actual:6,  target:46 },
+    { week:'Wk2 Apr', period:'08–14 Apr', actual:6,  target:46 },
+    { week:'Wk3 Apr', period:'15–21 Apr', actual:8,  target:46 },
+    { week:'Wk4 Apr', period:'22–30 Apr', actual:11, target:46 },
+    { week:'Wk1 May', period:'01–07 May', actual:13, target:46 },
+    { week:'Wk2 May', period:'08–14 May', actual:11, target:46 },
+    { week:'Wk3 May', period:'15–21 May', actual:15, target:46 },
+    { week:'Wk4 May', period:'22–31 May', actual:24, target:46 },
+  ],
+
+  recovery: [
+    { project:'Starview',    target:150, priority:'High' },
+    { project:'Miraya',      target:96,  priority:'Low'  },
+    { project:'Aikyam',      target:150, priority:'High' },
+    { project:'Midas City',  target:110, priority:'High' },
+    { project:'Mithila-2',   target:58,  priority:'High' },
+    { project:'Momento',     target:90,  priority:'High' },
+    { project:'Borhadewadi', target:90,  priority:'High' },
+    { project:'Marvel',      target:41,  priority:'Low'  },
+    { project:'Melizma',     target:39,  priority:'Low'  },
+    { project:'Lifepark',    target:37,  priority:'Low'  },
+    { project:'Myra',        target:21,  priority:'Medium'},
+    { project:'Mithila-1',   target:26,  priority:'Low'  },
+  ],
+
+  leadSources: [
+    { source:'Channel Partners', bookings:50, conv:96.2 },
+    { source:'Walk-in',          bookings:25, conv:100  },
+    { source:'Referral',         bookings:19, conv:100  },
+    { source:'Digital',          bookings:5,  conv:100  },
+  ],
+
+  salesLog: [
+    { date:'01/06/26', sp:'Roshani',      client:'Ishwardas Valecha', project:'Aikyam',    flat:'D-3002', rev:61.56, bsp:5410, src:'Walk-in',         status:'Booked' },
+    { date:'01/06/26', sp:'Roshani',      client:'Ishwardas Valecha', project:'Aikyam',    flat:'D-402',  rev:56.16, bsp:4935, src:'Walk-in',         status:'Booked' },
+    { date:'01/06/26', sp:'Disha',        client:'Tejas Bondage',     project:'Mithila-1', flat:'A-904',  rev:31.73, bsp:4801, src:'Channel Partners',status:'Booked' },
+    { date:'01/06/26', sp:'Disha',        client:'Narendra Varpe',    project:'Mithila-1', flat:'A-1408', rev:47.08, bsp:4905, src:'Channel Partners',status:'Booked' },
+    { date:'01/06/26', sp:'Mayur Anarse', client:'Swapnita Kharade',  project:'Lifepark',  flat:'I-304',  rev:43.70, bsp:4850, src:'Referral',        status:'Booked' },
+    { date:'31/05/26', sp:'Sachin',       client:'Sahil Kalghatgi',   project:'Melizma',   flat:'A-1302', rev:57.77, bsp:5956, src:'Walk-in',         status:'Booked' },
+    { date:'31/05/26', sp:'Shilpee',      client:'Unmesh Vilashrao',  project:'Aikyam',    flat:'D-1602', rev:78.30, bsp:6881, src:'Channel Partners',status:'Booked' },
+    { date:'31/05/26', sp:'Krushna',      client:'Jayshri Shinde',    project:'Marvel',    flat:'B-106',  rev:41.14, bsp:4607, src:'Channel Partners',status:'Booked' },
+    { date:'31/05/26', sp:'Suvarna',      client:'Samiksha Anil',     project:'Mithila-1', flat:'A-1007', rev:46.45, bsp:4828, src:'Channel Partners',status:'Booked' },
+    { date:'31/05/26', sp:'Pranjali',     client:'Chetan Rachod',     project:'Midas City',flat:'B-507',  rev:51.12, bsp:4920, src:'Referral',        status:'Booked' },
+    { date:'03/05/26', sp:'Shilpee',      client:'Harshal Amle',      project:'Aikyam',    flat:'D-2702', rev:78.31, bsp:6881, src:'Channel Partners',status:'Lost'   },
+  ]
+};
+
+// ──────────────────────────────────────────────────────────────
+// STATE
+let charts = {};
+let data = { ...STATIC };
+
+// ──────────────────────────────────────────────────────────────
+// NAVIGATION
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach(t => { if (t.textContent.toLowerCase().includes(id) || t.getAttribute('onclick').includes("'"+id+"'")) t.classList.add('active'); });
+}
+
+// ──────────────────────────────────────────────────────────────
+// DATA FETCH (via Apps Script relay)
+async function fetchAllData() {
+  const btn = document.getElementById('refreshBtn');
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  btn.classList.add('loading');
+  dot.className = 'sync-dot';
+  label.textContent = 'Syncing…';
+
+  if (CONFIG.APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+    // Offline demo mode — use static data
+    renderAll(STATIC);
+    setSync('demo', 'Demo mode — connect your sheet');
+    btn.classList.remove('loading');
+    return;
+  }
+
+  try {
+    const url = `${CONFIG.APPS_SCRIPT_URL}?sheetId=${CONFIG.SHEET_ID}`;
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+    // Merge live data with static fallback
+    data = { ...STATIC, ...json };
+    renderAll(data);
+    setSync('live', 'Live · ' + new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }));
+  } catch (err) {
+    console.error(err);
+    renderAll(STATIC);
+    setSync('error', 'Error — using cached data');
+    showError('Could not reach Google Sheets: ' + err.message + '. Showing last known data.');
+  }
+  btn.classList.remove('loading');
+}
+
+function setSync(state, msg) {
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  dot.className = 'sync-dot ' + (state === 'live' ? 'live' : state === 'error' ? 'error' : '');
+  label.textContent = msg;
+  const lu = document.getElementById('lastUpdated');
+  if (lu) lu.textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+}
+
+function showError(msg) {
+  const b = document.getElementById('errorBanner');
+  b.textContent = msg;
+  b.style.display = 'block';
+  setTimeout(() => b.style.display = 'none', 8000);
+}
+
+// ──────────────────────────────────────────────────────────────
+// RENDER ALL
+function renderAll(d) {
+  renderKPIs(d);
+  renderCharts(d);
+  renderBriefing(d);
+  renderPortfolio(d);
+  renderTeam(d);
+  renderPace(d);
+  renderRecovery(d);
+  renderLeads(d);
+}
+
+// ──────────────────────────────────────────────────────────────
+// KPIs
+function renderKPIs(d) {
+  const revPct = (d.revAchieved / d.revTarget * 100).toFixed(1);
+  const unitPct = (d.unitsAchieved / d.unitsTarget * 100).toFixed(1);
+
+  set('k-rev-pct',  revPct + '%');
+  set('k-rev-sub',  '₹' + d.revAchieved.toFixed(1) + ' Cr of ₹' + d.revTarget + ' Cr');
+  set('k-unit-pct', unitPct + '%');
+  set('k-unit-sub', d.unitsAchieved + ' of ' + d.unitsTarget + ' target');
+  set('k-pace',     d.weeklyRate + '/wk');
+  set('k-recovery', '₹0');
+  set('k-conv',     d.convRate + '%');
+  set('k-burn',     '₹' + d.zeroSaleBurn);
+
+  // Year-end forecast at current rate: 99 + (12.4 * 4.3 * 10) ≈ units; simpler: units/8wks * 52wks
+  const weeklyBookings = d.weeks ? d.weeks.reduce((a,w) => a + w.actual, 0) / d.weeks.length : d.weeklyRate;
+  const forecastUnits = Math.round(d.unitsAchieved + weeklyBookings * 10 * 4.3);
+  const forecastRev = (forecastUnits * (d.revAchieved / d.unitsAchieved)).toFixed(0);
+  set('k-forecast', '~₹' + Math.round(d.revAchieved / d.unitsAchieved * forecastUnits) + ' Cr');
+
+  const activeSales = d.team ? d.team.filter(t => t.units > 0).length : 15;
+  set('k-team', activeSales);
+  set('k-team-sub', 'of ' + (d.team ? d.team.length : 21) + ' total');
+}
+
+// ──────────────────────────────────────────────────────────────
+// CHARTS
+function renderCharts(d) {
+  const projs = d.projects || STATIC.projects;
+  const selling = projs.filter(p => p.revAch > 0);
+
+  // Destroy old charts
+  Object.values(charts).forEach(c => c && c.destroy());
+
+  const chartDefaults = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1e1e1e',
+        borderColor: '#333',
+        borderWidth: 1,
+        titleColor: '#f0ede8',
+        bodyColor: '#9a9591',
+        padding: 10,
+      }
+    },
+    scales: {
+      x: { ticks: { color: '#5e5b58', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.07)' } },
+      y: { ticks: { color: '#5e5b58', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.07)' } }
+    }
+  };
+
+  // Revenue chart
+  charts.rev = new Chart(document.getElementById('revChart'), {
+    type: 'bar',
+    data: {
+      labels: selling.map(p => p.name),
+      datasets: [
+        { label: 'Achieved', data: selling.map(p => p.revAch), backgroundColor: '#4a90d4', borderRadius: 3 },
+        { label: 'Target',   data: selling.map(p => p.revTarget), backgroundColor: '#252525', borderRadius: 3 },
+      ]
+    },
+    options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, legend: { display: false } } }
+  });
+
+  // Units chart
+  charts.unit = new Chart(document.getElementById('unitChart'), {
+    type: 'bar',
+    data: {
+      labels: selling.map(p => p.name),
+      datasets: [
+        { label: 'Sold',   data: selling.map(p => p.uSold),   backgroundColor: '#4ea86b', borderRadius: 3 },
+        { label: 'Target', data: selling.map(p => p.uTarget), backgroundColor: '#252525', borderRadius: 3 },
+      ]
+    },
+    options: { ...chartDefaults }
+  });
+
+  // Weekly trend
+  const weeks = d.weeks || STATIC.weeks;
+  charts.weekly = new Chart(document.getElementById('weeklyChart'), {
+    type: 'line',
+    data: {
+      labels: weeks.map(w => w.week),
+      datasets: [
+        { label:'Actual',  data: weeks.map(w => w.actual),  borderColor:'#c9a84c', backgroundColor:'rgba(201,168,76,0.1)', tension:0.4, fill:true, pointRadius:4, pointBackgroundColor:'#c9a84c', borderWidth:2 },
+        { label:'Target',  data: weeks.map(w => w.target),  borderColor:'#5e5b58', borderDash:[4,4], tension:0, pointRadius:0, borderWidth:1 }
+      ]
+    },
+    options: { ...chartDefaults }
+  });
+
+  // Lead chart
+  const ls = d.leadSources || STATIC.leadSources;
+  charts.lead = new Chart(document.getElementById('leadChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ls.map(l => l.source),
+      datasets: [{ data: ls.map(l => l.bookings), backgroundColor: ['#4a90d4','#4ea86b','#c9a84c','#d4843a'], borderWidth: 0, hoverOffset: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e1e1e', titleColor: '#f0ede8', bodyColor: '#9a9591' } }
+    }
+  });
+
+  // Lead legend
+  const colors = ['#4a90d4','#4ea86b','#c9a84c','#d4843a'];
+  document.getElementById('leadLegend').innerHTML = ls.map((l,i) =>
+    `<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);margin-bottom:5px;">
+      <div style="width:8px;height:8px;border-radius:2px;background:${colors[i]};flex-shrink:0;"></div>
+      <span>${l.source} (${l.bookings})</span>
+    </div>`
+  ).join('');
+
+  // ROI chart
+  const activeTeam = (d.team || STATIC.team).filter(t => t.units > 0).sort((a,b) => b.roi - a.roi);
+  charts.roi = new Chart(document.getElementById('roiChart'), {
+    type: 'bar',
+    data: {
+      labels: activeTeam.map(t => t.name.split(' ')[0]),
+      datasets: [{ label:'Rev/₹1 CTC', data: activeTeam.map(t => t.roi), backgroundColor: activeTeam.map(t => t.roi > 100 ? '#4ea86b' : t.roi > 50 ? '#c9a84c' : '#4a90d4'), borderRadius: 3 }]
+    },
+    options: { ...chartDefaults }
+  });
+
+  // Pace chart
+  charts.pace = new Chart(document.getElementById('paceChart'), {
+    type: 'bar',
+    data: {
+      labels: weeks.map(w => w.week),
+      datasets: [
+        { label: 'Actual',  data: weeks.map(w => w.actual),  backgroundColor: '#c9a84c', borderRadius: 3, order:1 },
+        { label: 'Target',  data: weeks.map(w => w.target),  type: 'line', borderColor: '#e05555', borderDash: [4,4], pointRadius: 0, borderWidth: 1.5, fill: false, order:0 },
+      ]
+    },
+    options: { ...chartDefaults }
+  });
+
+  // BSP chart
+  const bspProjs = projs.filter(p => p.bsp > 0);
+  charts.bsp = new Chart(document.getElementById('bspChart'), {
+    type: 'bar',
+    data: {
+      labels: bspProjs.map(p => p.name),
+      datasets: [{ label: 'BSP (₹/sqft)', data: bspProjs.map(p => p.bsp), backgroundColor: '#4a90d4', borderRadius: 3 }]
+    },
+    options: { ...chartDefaults, indexAxis: 'y', scales: {
+      x: { ticks: { color: '#5e5b58', font: { size: 11 }, callback: v => '₹' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.07)' } },
+      y: { ticks: { color: '#9a9591', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.07)' } }
+    }}
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+// BRIEFING
+function renderBriefing(d) {
+  document.getElementById('briefDate').textContent = 'As of June 2, 2026';
+
+  const alerts = [
+    { type:'p1', icon:'🔴', title:'5 high-priority projects: 0 bookings — ₹835 Cr revenue gap', desc:'Starview (₹278 Cr), Momento (₹209 Cr), Borhadewadi-1 (₹185 Cr), Mithila-2 (₹110 Cr), Myra (₹53 Cr) have zero bookings this year. These alone represent 64% of the annual target.', action:'Decision: Launch readiness review + assign cluster heads within 7 days', actionClass:'action-red' },
+    { type:'p1', icon:'🔴', title:'6 salespeople with zero sales — ₹39.85 L CTC burn with ₹0 revenue', desc:'Vikash (₹7.68L), Ajay (₹7.68L), Ketan (₹6.96L), Himanshu (₹6.82L), Subham (₹5.15L), Priyanka (₹5.57L) — all Managers or senior reps, all zero bookings.', action:'Decision: Issue PIP letters within 30 days or reassign to active project sites', actionClass:'action-red' },
+    { type:'p1', icon:'🔴', title:'Collections at ₹0 — ₹961 Cr recovery completely untracked', desc:'Recovery log shows #REF! error. No payment entries exist across any of the 16 projects. If even 10% of ₹961 Cr target is outstanding, ₹96 Cr in cash flow is invisible to leadership.', action:'Decision: Mandate Friday collections entry. Assign one person per cluster to own this.', actionClass:'action-red' },
+    { type:'p2', icon:'🟡', title:'Booking pace is 3.6× below minimum — annual target at severe risk', desc:'Running at 12.4 bookings/week; need 45.5/week to hit 2,070 by March 2027. At current pace, year-end projection is ~599 units (28.9% achievement).', action:'Decision: Increase CP network activation, launch digital campaign for Midas City and Aikyam this week', actionClass:'action-amber' },
+    { type:'p2', icon:'🟡', title:'Miraya: 0 bookings despite ₹96 Cr recovery target', desc:'Miraya has a ₹96 Cr recovery target with 40 units unsold and 0% achievement. This suggests a project-level block — possibly approvals, construction delay, or pricing issue.', action:'Decision: Investigate Miraya project status with COO. Is this project launchable this FY?', actionClass:'action-amber' },
+  ];
+
+  const wins = [
+    { type:'win', icon:'🟢', title:'Lifepark: 271% units, 433% revenue — the benchmark playbook', desc:'Krushna (15 units, ₹7.7 Cr, ROI: 133×) and Mayur Anarse (13 units) drove this through a pure Channel Partner model. CP leads convert at 96.2%.', action:'Replicate: Document Krushna\'s CP outreach process and deploy to Midas City and Aikyam immediately', actionClass:'action-green' },
+    { type:'win', icon:'🟢', title:'98% booking conversion rate — lead quality is exceptional', desc:'Only 2 leads lost out of 101 total enquiries. The quality filter is working. The constraint is volume, not conversion. Scale inbound aggressively.', action:'Strategy: Double CP activations, invest ₹5–10L/month in digital — cost per booking is already under ₹1.25L', actionClass:'action-green' },
+    { type:'win', icon:'🟢', title:'Team cost efficiency: ₹45.88 revenue per ₹1 of CTC (active sellers)', desc:'For salespeople who are selling, the unit economics are excellent. Krushna generates ₹133 for every ₹1 spent on his salary. This is best-in-class.', action:'Focus: Remove zero-performers and the ratio improves even further', actionClass:'action-green' },
+  ];
+
+  document.getElementById('alertList').innerHTML = alerts.map(a => `
+    <div class="alert-card ${a.type}">
+      <span class="alert-icon">${a.icon}</span>
+      <div class="alert-body">
+        <div class="alert-title">${a.title}</div>
+        <div class="alert-desc">${a.desc}</div>
+        <span class="alert-action ${a.actionClass}">${a.action}</span>
+      </div>
+      <span class="alert-badge badge-${a.type}">${a.type.toUpperCase()}</span>
+    </div>`).join('');
+
+  document.getElementById('winList').innerHTML = wins.map(w => `
+    <div class="alert-card win">
+      <span class="alert-icon">${w.icon}</span>
+      <div class="alert-body">
+        <div class="alert-title">${w.title}</div>
+        <div class="alert-desc">${w.desc}</div>
+        <span class="alert-action action-green">${w.action}</span>
+      </div>
+      <span class="alert-badge badge-win">WIN</span>
+    </div>`).join('');
+}
+
+// ──────────────────────────────────────────────────────────────
+// PORTFOLIO
+function renderPortfolio(d) {
+  const projs = d.projects || STATIC.projects;
+
+  // Matrix
+  document.getElementById('portfolioMatrix').innerHTML = projs.map(p => {
+    const pct = p.revTarget > 0 ? Math.round(p.revAch / p.revTarget * 100) : 0;
+    const cls = pct >= 100 ? 'hit' : pct >= 30 ? 'mid' : pct > 0 ? 'low' : 'zero';
+    return `<div class="matrix-cell ${cls}">
+      <div class="mc-name" style="color:var(--text2);font-size:11px;">${p.name}</div>
+      <div class="mc-pct">${pct}%</div>
+      <div class="mc-rev">₹${p.revAch} / ₹${p.revTarget} Cr</div>
+    </div>`;
+  }).join('');
+
+  // Bar rows
+  const maxPct = 450;
+  document.getElementById('projBars').innerHTML = projs.map(p => {
+    const pct = p.revTarget > 0 ? (p.revAch / p.revTarget * 100) : 0;
+    const w = Math.min(pct, maxPct) / maxPct * 100;
+    const color = pct >= 100 ? '#4ea86b' : pct >= 30 ? '#c9a84c' : '#e05555';
+    return `<div class="bar-row">
+      <div class="bar-label">${p.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color};"></div></div>
+      <div class="bar-val">${pct.toFixed(0)}%</div>
+    </div>`;
+  }).join('');
+}
+
+function updateScenario(val) {
+  const v = parseInt(val);
+  document.getElementById('scnVal').textContent = v;
+  const projected = 99 + v * 10;
+  const pct = (projected / 2070 * 100).toFixed(1);
+  const gap = Math.max(0, 200 - v);
+  const estRev = (projected * (56.9 / 99)).toFixed(0);
+
+  document.getElementById('scnNum').textContent = projected.toLocaleString('en-IN');
+  document.getElementById('scnSub').textContent = pct + '% of 2,070 target';
+  document.getElementById('scnGap').textContent = gap > 0 ? gap + '/mo' : '0 — on track';
+  document.getElementById('scnRevForecast').textContent = '₹' + estRev + ' Cr';
+
+  const feasEl = document.getElementById('scnFeas');
+  const numEl = document.getElementById('scnNum');
+  if (v >= 200) {
+    feasEl.textContent = 'On track'; feasEl.className = 'sval ok';
+    numEl.style.color = '#4ea86b';
+  } else if (v >= 150) {
+    feasEl.textContent = 'Close'; feasEl.className = 'sval warn';
+    numEl.style.color = '#d4843a';
+  } else {
+    feasEl.textContent = 'Shortfall'; feasEl.className = 'sval bad';
+    numEl.style.color = '#e05555';
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// TEAM
+function renderTeam(d) {
+  const team = (d.team || STATIC.team).sort((a,b) => b.units - a.units);
+
+  document.getElementById('teamTableBody').innerHTML = team.map(t => {
+    const statusPill = t.units === 0
+      ? `<span class="pill pill-red">Zero Sale</span>`
+      : t.roi > 100 ? `<span class="pill pill-gold">Top</span>`
+      : t.roi > 50  ? `<span class="pill pill-green">Strong</span>`
+      : `<span class="pill pill-blue">Active</span>`;
+    const roiClass = t.roi > 100 ? 'good' : t.roi > 50 ? '' : t.roi === 0 ? 'bad' : '';
+    return `<tr>
+      <td class="name">${t.name}</td>
+      <td>${t.cluster}</td>
+      <td class="num">${t.units}</td>
+      <td class="num">${t.revenue > 0 ? t.revenue.toFixed(2) : '—'}</td>
+      <td class="num ${roiClass}">${t.roi > 0 ? t.roi.toFixed(1) + '×' : '—'}</td>
+      <td class="num ${t.units === 0 ? 'bad' : ''}">${t.ctc.toFixed(2)}</td>
+      <td>${statusPill}</td>
+    </tr>`;
+  }).join('');
+
+  // PIP list
+  const zeros = team.filter(t => t.units === 0);
+  document.getElementById('pipList').innerHTML = zeros.map(t =>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid rgba(224,85,85,0.15);">
+      <span style="font-size:12px;color:var(--text2);">${t.name} <span style="font-size:10px;color:var(--text3);">(${t.cluster})</span></span>
+      <span style="font-size:12px;color:var(--red);font-weight:600;">₹${t.ctc.toFixed(2)} L/yr</span>
+    </div>`
+  ).join('');
+
+  const totalBurn = zeros.reduce((s,t) => s + t.ctc, 0);
+  set('totalBurn', '₹' + totalBurn.toFixed(2) + ' L/yr');
+}
+
+// ──────────────────────────────────────────────────────────────
+// PACE
+function renderPace(d) {
+  const weeks = d.weeks || STATIC.weeks;
+  set('p-runrate', d.weeklyRate);
+  set('p-required', d.requiredRate || 45.5);
+  set('p-remaining', (d.unitsTarget - d.unitsAchieved).toLocaleString('en-IN'));
+
+  let cum = 0, cumTarget = 0;
+  document.getElementById('paceTableBody').innerHTML = weeks.map(w => {
+    cum += w.actual;
+    cumTarget += w.target;
+    const gap = cum - cumTarget;
+    const pct = Math.round(w.actual / w.target * 100);
+    const rag = pct >= 80 ? `<span class="pill pill-green">On Track</span>` : pct >= 40 ? `<span class="pill pill-amber">Behind</span>` : `<span class="pill pill-red">Far Behind</span>`;
+    return `<tr>
+      <td style="font-weight:500;color:var(--text);">${w.week}</td>
+      <td>${w.period}</td>
+      <td class="num" style="color:${w.actual >= w.target ? '#4ea86b' : '#e05555'}">${w.actual}</td>
+      <td class="num" style="color:var(--text3)">${w.target}</td>
+      <td class="num" style="color:${w.actual >= w.target ? '#4ea86b' : '#e05555'}">${w.actual - w.target > 0 ? '+' : ''}${w.actual - w.target}</td>
+      <td class="num">${pct}%</td>
+      <td class="num">${cum}</td>
+      <td class="num" style="color:var(--red)">${gap}</td>
+      <td>${rag}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ──────────────────────────────────────────────────────────────
+// RECOVERY
+function renderRecovery(d) {
+  const rec = d.recovery || STATIC.recovery;
+  const max = Math.max(...rec.map(r => r.target));
+
+  document.getElementById('recoveryBars').innerHTML = rec.map(r => {
+    const color = r.priority === 'High' ? '#e05555' : r.priority === 'Medium' ? '#d4843a' : '#4a90d4';
+    const w = (r.target / max * 100).toFixed(1);
+    return `<div class="bar-row">
+      <div class="bar-label">${r.project}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color};opacity:0.7;"></div></div>
+      <div style="font-size:11px;color:var(--text3);min-width:60px;text-align:right;">₹${r.target} Cr</div>
+      <span class="pill ${r.priority === 'High' ? 'pill-red' : r.priority === 'Medium' ? 'pill-amber' : 'pill-blue'}" style="min-width:48px;text-align:center;">${r.priority}</span>
+    </div>`;
+  }).join('');
+}
+
+// ──────────────────────────────────────────────────────────────
+// LEADS
+function renderLeads(d) {
+  const ls = d.leadSources || STATIC.leadSources;
+  const maxBook = Math.max(...ls.map(l => l.bookings));
+  const colors = ['#4a90d4','#4ea86b','#c9a84c','#d4843a'];
+
+  document.getElementById('leadSourceBars').innerHTML = ls.map((l,i) => {
+    const w = (l.bookings / maxBook * 100).toFixed(1);
+    return `<div class="bar-row" style="margin-bottom:16px;">
+      <div class="bar-label" style="min-width:140px;">${l.source}</div>
+      <div style="flex:1;">
+        <div class="bar-track" style="height:10px;"><div class="bar-fill" style="width:${w}%;background:${colors[i]};"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <span style="font-size:10px;color:var(--text3);">${l.bookings} bookings</span>
+          <span style="font-size:10px;color:${l.conv === 100 ? '#4ea86b' : '#c9a84c'};">${l.conv}% conv.</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Sales log
+  const log = d.salesLog || STATIC.salesLog;
+  document.getElementById('salesLogBody').innerHTML = log.map(s => {
+    const statusPill = s.status === 'Booked'
+      ? `<span class="pill pill-green">Booked</span>`
+      : `<span class="pill pill-red">Lost</span>`;
+    return `<tr>
+      <td style="color:var(--text3);font-size:11px;">${s.date}</td>
+      <td class="name">${s.sp}</td>
+      <td style="color:var(--text2);">${s.client}</td>
+      <td>${s.project}</td>
+      <td style="color:var(--text3);">${s.flat}</td>
+      <td class="num">₹${s.rev.toFixed(2)}</td>
+      <td class="num" style="color:var(--text3);">₹${s.bsp.toLocaleString('en-IN')}</td>
+      <td style="font-size:11px;color:var(--text3);">${s.src}</td>
+      <td>${statusPill}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ──────────────────────────────────────────────────────────────
+// UTILS
+function set(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// ──────────────────────────────────────────────────────────────
+// INIT
+window.addEventListener('DOMContentLoaded', () => {
+  // Hide loading after a tick
+  setTimeout(() => {
+    document.getElementById('loadingText').textContent = 'Building dashboard…';
+    setTimeout(() => {
+      const ls = document.getElementById('loadingScreen');
+      ls.style.opacity = '0';
+      setTimeout(() => ls.style.display = 'none', 300);
+      fetchAllData();
+    }, 600);
+  }, 800);
+});
+</script>
+
+<!-- ══════════════════════════════════
+     README — HOW TO CONNECT YOUR SHEET
+══════════════════════════════════════
+
+STEP 1: Open your VP Master Dashboard Google Sheet
+
+STEP 2: Go to Extensions > Apps Script
+
+STEP 3: Paste this relay script and deploy as Web App:
+
+```
+function doGet(e) {
+  const sheetId = e.parameter.sheetId;
+  const ss = SpreadsheetApp.openById(sheetId);
+  
+  try {
+    const overview = ss.getSheetByName('📊 Overview');
+    const pacer   = ss.getSheetByName('📅 Weekly Pacer');
+    const pnl     = ss.getSheetByName('💰 P&L');
+    
+    // Pull key metrics from Overview row 10
+    const row = overview.getRange('A10:O10').getValues()[0];
+    
+    const data = {
+      unitsAchieved: row[2] || 99,
+      revAchieved:   row[10] || 56.9,
+      weeklyRate:    pacer ? pacer.getRange('B7').getValue() : 12.4,
+      convRate:      98.0,
+      zeroSaleBurn:  39.85,
+    };
+    
+    return ContentService
+      .createTextOutput(JSON.stringify(data))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ error: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+```
+
+STEP 4: Deploy > New Deployment > Web App
+  - Execute as: Me
+  - Who has access: Anyone
+  - Copy the Web App URL
+
+STEP 5: Paste the URL into CONFIG.APPS_SCRIPT_URL at the top of this file
+
+STEP 6: Deploy on Vercel / Netlify / GitHub Pages — it's a single HTML file, no build step needed.
+
+════════════════════════════════════ -->
+
+</body>
+</html>
