@@ -3,31 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mangalam Landmarks — VP Command Center</title>
+<title>Mangalam Landmarks — CEO Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
   :root {
-    --bg: #0f0f0f;
-    --bg2: #161616;
-    --bg3: #1e1e1e;
-    --bg4: #252525;
-    --border: rgba(255,255,255,0.07);
-    --border2: rgba(255,255,255,0.12);
-    --text: #f0ede8;
-    --text2: #9a9591;
-    --text3: #5e5b58;
-    --gold: #c9a84c;
-    --gold2: #e8c97a;
-    --red: #e05555;
-    --red-bg: rgba(224,85,85,0.1);
-    --amber: #d4843a;
-    --amber-bg: rgba(212,132,58,0.1);
-    --green: #4ea86b;
-    --green-bg: rgba(78,168,107,0.1);
-    --blue: #4a90d4;
-    --blue-bg: rgba(74,144,212,0.1);
-    --radius: 10px;
+    /* Mangalam Brand Palette — Light Theme */
+    --bg:      #f0f0f2;
+    --bg2:     #ffffff;
+    --bg3:     #f7f7f9;
+    --bg4:     #ebebed;
+    --border:  rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.14);
+    --text:    #1a1a1f;
+    --text2:   #5a5760;
+    --text3:   #9a97a0;
+    /* Mangalam signature: deep maroon + red accent */
+    --brand:        #8b1a1a;
+    --brand-light:  #b52525;
+    --brand-red:    #d42b2b;
+    --brand-dot:    #e03333;
+    --brand-bg:     rgba(139,26,26,0.07);
+    --brand-bg2:    rgba(212,43,43,0.07);
+    /* Neutrals */
+    --cream:        #f5efe6;
+    --charcoal:     #3a3632;
+    /* Status */
+    --red:      #c93333;
+    --red-bg:   rgba(201,51,51,0.08);
+    --amber:    #b86a1a;
+    --amber-bg: rgba(184,106,26,0.09);
+    --green:    #2e8a50;
+    --green-bg: rgba(46,138,80,0.09);
+    --blue:     #2970b8;
+    --blue-bg:  rgba(41,112,184,0.09);
+    --gold:     #a8862a;
+    --gold2:    #c9a84c;
+    --radius:    10px;
     --radius-sm: 6px;
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-body:    'DM Sans', system-ui, sans-serif;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,7 +52,7 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-body);
     font-size: 14px;
     line-height: 1.5;
     min-height: 100vh;
@@ -46,26 +63,65 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(15,15,15,0.92);
-    backdrop-filter: blur(12px);
+    background: rgba(240,240,242,0.95);
+    backdrop-filter: blur(16px);
     border-bottom: 0.5px solid var(--border);
     padding: 0 28px;
-    height: 56px;
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
-  .topbar-left { display: flex; align-items: center; gap: 12px; }
-  .logo-mark {
-    width: 32px; height: 32px;
-    background: var(--gold);
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 700; color: #0f0f0f;
-    letter-spacing: -0.5px;
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+
+  /* Mangalam Logo Wordmark */
+  .logo-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    line-height: 1;
   }
-  .topbar-title { font-size: 14px; font-weight: 600; color: var(--text); }
-  .topbar-sub { font-size: 11px; color: var(--text3); margin-left: 4px; }
+  .logo-mangalam {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.01em;
+    line-height: 1;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .logo-dot {
+    width: 7px; height: 7px;
+    background: var(--brand-dot);
+    border-radius: 50%;
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+  .logo-landmarks {
+    font-family: var(--font-body);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-top: 2px;
+    padding-left: 11px;
+  }
+  .topbar-divider {
+    width: 0.5px;
+    height: 28px;
+    background: var(--border2);
+  }
+  .topbar-module {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .topbar-title { font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--text); }
+  .topbar-sub { font-size: 11px; color: var(--text3); }
   .topbar-right { display: flex; align-items: center; gap: 16px; }
   .sync-status {
     display: flex; align-items: center; gap: 6px;
@@ -98,25 +154,28 @@
   .nav-tabs {
     display: flex;
     gap: 2px;
-    padding: 12px 28px;
+    padding: 10px 28px;
     border-bottom: 0.5px solid var(--border);
     overflow-x: auto;
     scrollbar-width: none;
+    background: var(--bg2);
   }
   .nav-tabs::-webkit-scrollbar { display: none; }
   .nav-tab {
     padding: 6px 16px;
     border-radius: var(--radius-sm);
     font-size: 12px;
+    font-weight: 400;
     color: var(--text3);
     cursor: pointer;
     border: none;
     background: transparent;
     white-space: nowrap;
     transition: all 0.15s;
+    font-family: var(--font-body);
   }
   .nav-tab:hover { color: var(--text2); background: var(--bg3); }
-  .nav-tab.active { color: var(--gold); background: rgba(201,168,76,0.1); }
+  .nav-tab.active { color: var(--brand-dot); background: var(--brand-bg2); font-weight: 500; }
 
   /* ─── MAIN LAYOUT ─── */
   .main { padding: 24px 28px; max-width: 1400px; }
@@ -131,10 +190,21 @@
     margin-bottom: 16px;
   }
   .section-title {
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text3);
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px; height: 4px;
+    background: var(--brand-dot);
+    border-radius: 50%;
   }
 
   /* ─── KPI GRID ─── */
@@ -165,7 +235,8 @@
   .kpi-card.danger { --kpi-accent: var(--red); }
   .kpi-card.warn   { --kpi-accent: var(--amber); }
   .kpi-card.ok     { --kpi-accent: var(--green); }
-  .kpi-card.gold   { --kpi-accent: var(--gold); }
+  .kpi-card.gold   { --kpi-accent: var(--brand-dot); }
+  .kpi-card.gold .kpi-value { color: var(--brand-dot); }
 
   .kpi-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; letter-spacing: 0.02em; }
   .kpi-value { font-size: 26px; font-weight: 600; line-height: 1; margin-bottom: 6px; }
@@ -189,11 +260,12 @@
     overflow: hidden;
   }
   .card-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text2);
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text3);
     margin-bottom: 16px;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
   }
 
@@ -286,7 +358,7 @@
   .pill-green { background: var(--green-bg); color: var(--green); }
   .pill-red   { background: var(--red-bg);   color: var(--red);   }
   .pill-amber { background: var(--amber-bg); color: var(--amber); }
-  .pill-gold  { background: rgba(201,168,76,0.15); color: var(--gold2); }
+  .pill-gold  { background: rgba(168,134,42,0.12); color: var(--gold); }
   .pill-blue  { background: var(--blue-bg);  color: var(--blue);  }
   .pill-gray  { background: var(--bg4);      color: var(--text3); }
 
@@ -370,7 +442,7 @@
     background: var(--gold);
     border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: 800; color: #0f0f0f;
+    font-size: 20px; font-weight: 800; color: #ffffff;
   }
   .loading-text { font-size: 13px; color: var(--text3); }
   .loading-bar-wrap {
@@ -381,7 +453,7 @@
   }
   .loading-bar {
     height: 100%;
-    background: var(--gold);
+    background: var(--brand-dot);
     border-radius: 1px;
     animation: loadbar 1.8s ease-in-out infinite;
   }
@@ -480,9 +552,14 @@
 </head>
 <body>
 
-<!-- Loading -->
 <div class="loading-screen" id="loadingScreen">
-  <div class="loading-logo">ML</div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:8px;">
+    <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:32px;font-weight:600;color:#1a1a1f;display:flex;align-items:flex-start;gap:5px;line-height:1;">
+      <div style="width:9px;height:9px;background:#e03333;border-radius:50%;margin-top:4px;flex-shrink:0;"></div>
+      Mangalam
+    </div>
+    <div style="font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:0.22em;color:#9a97a0;text-transform:uppercase;">Landmarks</div>
+  </div>
   <div class="loading-text" id="loadingText">Connecting to Google Sheets…</div>
   <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
 </div>
@@ -490,9 +567,18 @@
 <!-- Top Bar -->
 <div class="topbar">
   <div class="topbar-left">
-    <div class="logo-mark">ML</div>
-    <span class="topbar-title">CEO Command Center</span>
-    <span class="topbar-sub">FY 2025–26</span>
+    <div class="logo-wrap">
+      <div class="logo-mangalam">
+        <div class="logo-dot"></div>
+        Mangalam
+      </div>
+      <div class="logo-landmarks">Landmarks</div>
+    </div>
+    <div class="topbar-divider"></div>
+    <div class="topbar-module">
+      <div class="topbar-title">CEO Command Center</div>
+      <div class="topbar-sub">FY 2025–26 · Sales Intelligence</div>
+    </div>
   </div>
   <div class="topbar-right">
     <div class="sync-status">
@@ -506,6 +592,9 @@
     <span class="last-updated" id="lastUpdated"></span>
   </div>
 </div>
+
+<!-- Brand accent line -->
+<div style="height:2px;background:linear-gradient(90deg,#8b1a1a 0%,#d42b2b 40%,transparent 100%);"></div>
 
 <!-- Nav Tabs -->
 <div class="nav-tabs">
@@ -579,7 +668,7 @@
         <div class="card-title">Revenue Achieved vs Target (₹ Cr)</div>
         <div class="chart-legend">
           <div class="legend-item"><div class="legend-dot" style="background:#4a90d4;"></div>Achieved</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#252525;"></div>Target</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#dcdce0;"></div>Target</div>
         </div>
         <div class="chart-wrap" style="height:200px;">
           <canvas id="revChart" role="img" aria-label="Revenue achieved vs target by project"></canvas>
@@ -590,7 +679,7 @@
         <div class="card-title">Units Sold vs Target — Top Projects</div>
         <div class="chart-legend">
           <div class="legend-item"><div class="legend-dot" style="background:#4ea86b;"></div>Sold</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#252525;"></div>Target</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#dcdce0;"></div>Target</div>
         </div>
         <div class="chart-wrap" style="height:200px;">
           <canvas id="unitChart" role="img" aria-label="Units sold vs target by project"></canvas>
@@ -921,27 +1010,8 @@
 <script>
 // ─── CONFIGURATION ───────────────────────────────────────────
 const CONFIG = {
-  // Your VP Master Dashboard Sheet ID
   SHEET_ID: '1CDbbnFDMfJW2Bn3m4qwNtFCfJvlDDx0ztl6kXFvALV4',
-
-  // Apps Script Web App URL (deploy your relay script here)
-  // See README below for how to set this up
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxk8hQQB3mnFOBMpE_VlDjxIAFiOUju5NDCd9TrfK7UKGpLfVYc-Xx5WNQm3N5FwyG3OA/exec',
-
-  // Sheet tab names (must match exactly)
-  SHEETS: {
-    overview:    '📊 Overview',
-    trends:      '📈 Sales Trends',
-    pnl:         '💰 P&L',
-    funnel:      '🔍 Funnel & CPV',
-    cancels:     '❌ Cancellations',
-    pacer:       '📅 Weekly Pacer',
-    recovery:    '🏦 Recovery Log',
-    team:        '👥 Team Scorecard',
-    cost:        '⚙️ Cost Analytics',
-    alerts:      '⚠️ Alerts',
-    salesLog:    'Combined_Sales_Log',
-  }
 };
 
 // ─── STATIC DATA (used as fallback when offline) ──────────────
@@ -1062,38 +1132,65 @@ function showPage(id) {
 }
 
 // ──────────────────────────────────────────────────────────────
-// DATA FETCH (via Apps Script relay)
+// DATA FETCH — tries direct fetch first, then JSONP fallback
+function fetchViaJsonp(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_gs_cb_' + Date.now();
+    const script = document.createElement('script');
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('Timeout after 12s'));
+    }, 12000);
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+    window[cbName] = (data) => { cleanup(); resolve(data); };
+    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
+    script.onerror = () => { cleanup(); reject(new Error('JSONP script load failed')); };
+    document.head.appendChild(script);
+  });
+}
+
 async function fetchAllData() {
   const btn = document.getElementById('refreshBtn');
   const dot = document.getElementById('syncDot');
-  const label = document.getElementById('syncLabel');
+  const lbl = document.getElementById('syncLabel');
   btn.classList.add('loading');
   dot.className = 'sync-dot';
-  label.textContent = 'Syncing…';
+  lbl.textContent = 'Syncing…';
 
-  if (CONFIG.APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
-    // Offline demo mode — use static data
-    renderAll(STATIC);
-    setSync('demo', 'Demo mode — connect your sheet');
-    btn.classList.remove('loading');
-    return;
+  let json = null;
+
+  // Attempt 1: Direct fetch (works if Apps Script has correct CORS headers)
+  try {
+    const res = await fetch(CONFIG.APPS_SCRIPT_URL, { redirect: 'follow', mode: 'cors' });
+    if (res.ok) {
+      const text = await res.text();
+      // Strip any JSONP wrapper if present
+      const stripped = text.trim().replace(/^[^(]+\(/, '').replace(/\);?\s*$/, '');
+      json = JSON.parse(stripped.startsWith('{') || stripped.startsWith('[') ? stripped : text);
+    }
+  } catch (e1) {
+    console.warn('Direct fetch failed, trying JSONP:', e1.message);
+    // Attempt 2: JSONP (bypasses CORS redirect issue)
+    try {
+      json = await fetchViaJsonp(CONFIG.APPS_SCRIPT_URL);
+    } catch (e2) {
+      console.warn('JSONP also failed:', e2.message);
+    }
   }
 
-  try {
-    const url = `${CONFIG.APPS_SCRIPT_URL}?sheetId=${CONFIG.SHEET_ID}`;
-    const res = await fetch(url, { redirect: 'follow' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const json = await res.json();
-    if (json.error) throw new Error(json.error);
-    // Merge live data with static fallback
+  if (json && !json.error) {
     data = { ...STATIC, ...json };
     renderAll(data);
     setSync('live', 'Live · ' + new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }));
-  } catch (err) {
-    console.error(err);
+  } else {
     renderAll(STATIC);
-    setSync('error', 'Error — using cached data');
-    showError('Could not reach Google Sheets: ' + err.message + '. Showing last known data.');
+    const reason = json && json.error ? json.error : 'Network error';
+    setSync('error', 'Offline — cached data');
+    showError('Apps Script unreachable (' + reason + '). Showing embedded snapshot. Ensure the script is deployed as "Anyone" access.');
   }
   btn.classList.remove('loading');
 }
@@ -1168,17 +1265,17 @@ function renderCharts(d) {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#1e1e1e',
-        borderColor: '#333',
+        backgroundColor: '#ffffff',
+        borderColor: '#e0e0e4',
         borderWidth: 1,
-        titleColor: '#f0ede8',
-        bodyColor: '#9a9591',
+        titleColor: '#1a1a1f',
+        bodyColor: '#5a5760',
         padding: 10,
       }
     },
     scales: {
-      x: { ticks: { color: '#5e5b58', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.07)' } },
-      y: { ticks: { color: '#5e5b58', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.07)' } }
+      x: { ticks: { color: '#9a97a0', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.08)' } },
+      y: { ticks: { color: '#9a97a0', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.08)' } }
     }
   };
 
@@ -1189,7 +1286,7 @@ function renderCharts(d) {
       labels: selling.map(p => p.name),
       datasets: [
         { label: 'Achieved', data: selling.map(p => p.revAch), backgroundColor: '#4a90d4', borderRadius: 3 },
-        { label: 'Target',   data: selling.map(p => p.revTarget), backgroundColor: '#252525', borderRadius: 3 },
+        { label: 'Target',   data: selling.map(p => p.revTarget), backgroundColor: '#dcdce0', borderRadius: 3 },
       ]
     },
     options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, legend: { display: false } } }
@@ -1202,7 +1299,7 @@ function renderCharts(d) {
       labels: selling.map(p => p.name),
       datasets: [
         { label: 'Sold',   data: selling.map(p => p.uSold),   backgroundColor: '#4ea86b', borderRadius: 3 },
-        { label: 'Target', data: selling.map(p => p.uTarget), backgroundColor: '#252525', borderRadius: 3 },
+        { label: 'Target', data: selling.map(p => p.uTarget), backgroundColor: '#dcdce0', borderRadius: 3 },
       ]
     },
     options: { ...chartDefaults }
@@ -1232,7 +1329,7 @@ function renderCharts(d) {
     },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: '68%',
-      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e1e1e', titleColor: '#f0ede8', bodyColor: '#9a9591' } }
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#ffffff', borderColor: '#e0e0e4', borderWidth: 1, titleColor: '#1a1a1f', bodyColor: '#5a5760' } }
     }
   });
 
@@ -1278,8 +1375,8 @@ function renderCharts(d) {
       datasets: [{ label: 'BSP (₹/sqft)', data: bspProjs.map(p => p.bsp), backgroundColor: '#4a90d4', borderRadius: 3 }]
     },
     options: { ...chartDefaults, indexAxis: 'y', scales: {
-      x: { ticks: { color: '#5e5b58', font: { size: 11 }, callback: v => '₹' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.07)' } },
-      y: { ticks: { color: '#9a9591', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.07)' } }
+      x: { ticks: { color: '#9a97a0', font: { size: 11 }, callback: v => '₹' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.08)' } },
+      y: { ticks: { color: '#5a5760', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.08)' } }
     }}
   });
 }
