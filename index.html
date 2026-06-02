@@ -1184,7 +1184,13 @@ async function fetchAllData() {
   }
 
   if (json && !json.error) {
-    data = { ...STATIC, ...json };
+    data = {
+      ...STATIC,
+      ...json,
+      team:     (json.team     && json.team.length)     ? json.team     : STATIC.team,
+      projects: (json.projects && json.projects.length) ? json.projects : STATIC.projects,
+      weeks:    (json.weeks    && json.weeks.length)    ? json.weeks    : STATIC.weeks,
+    };
     renderAll(data);
     setSync('live', 'Live · ' + new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }));
   } else {
@@ -1374,13 +1380,17 @@ function renderCharts(d) {
     options: { ...chartDefaults }
   });
 
-  // BSP chart
-  const bspProjs = projs.filter(p => p.bsp > 0);
+  // BSP chart — prefer d.bsp array (sent by relay), fall back to projects[].bsp
+  const bspSource = (d.bsp && d.bsp.length)
+    ? d.bsp.filter(b => (b.avgBsp || b.bsp) > 0).map(b => ({ name: b.project, bsp: b.avgBsp || b.bsp }))
+    : projs.filter(p => p.bsp > 0).map(p => ({ name: p.name, bsp: p.bsp }));
   charts.bsp = new Chart(document.getElementById('bspChart'), {
     type: 'bar',
     data: {
-      labels: bspProjs.map(p => p.name),
-      datasets: [{ label: 'BSP (₹/sqft)', data: bspProjs.map(p => p.bsp), backgroundColor: '#4a90d4', borderRadius: 3 }]
+      labels: bspSource.map(p => p.name),
+      datasets: [{ label: 'BSP (₹/sqft)', data: bspSource.map(p => p.bsp),
+        backgroundColor: bspSource.map(p => p.bsp >= 6000 ? '#4ea86b' : p.bsp >= 5000 ? '#4a90d4' : '#c9a84c'),
+        borderRadius: 3 }]
     },
     options: { ...chartDefaults, indexAxis: 'y', scales: {
       x: { ticks: { color: '#4a4a50', font: { size: 11 }, callback: v => '₹' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.08)' } },
@@ -1699,32 +1709,112 @@ STEP 2: Go to Extensions > Apps Script
 STEP 3: Paste this relay script and deploy as Web App:
 
 ```
+// ── MANGALAM CEO DASHBOARD — APPS SCRIPT RELAY (FIXED v2) ──
+const SHEET_ID = '1CDbbnFDMfJW2Bn3m4qwNtFCfJvlDDx0ztl6kXFvALV4';
+
 function doGet(e) {
-  const sheetId = e.parameter.sheetId;
-  const ss = SpreadsheetApp.openById(sheetId);
-  
   try {
-    const overview = ss.getSheetByName('📊 Overview');
-    const pacer   = ss.getSheetByName('📅 Weekly Pacer');
-    const pnl     = ss.getSheetByName('💰 P&L');
-    
-    // Pull key metrics from Overview row 10
-    const row = overview.getRange('A10:O10').getValues()[0];
-    
-    const data = {
-      unitsAchieved: row[2] || 99,
-      revAchieved:   row[10] || 56.9,
-      weeklyRate:    pacer ? pacer.getRange('B7').getValue() : 12.4,
-      convRate:      98.0,
-      zeroSaleBurn:  39.85,
+    var ss = SpreadsheetApp.openById(SHEET_ID);
+
+    var vpSheet = ss.getSheetByName('VP Master Dashboard') || ss.getSheets()[0];
+    var salesSheet = ss.getSheetByName('Combined_Sales_Log')
+                  || ss.getSheetByName('Combined Sales Log');
+    var plSheet = ss.getSheetByName('P&L') || ss.getSheetByName('💰 P&L');
+
+    // ── KPI summary: row 3, cols A/C/G/I/M (0-indexed: 0,2,6,8,12)
+    var s = vpSheet.getRange(3, 1, 1, 16).getValues()[0];
+    var unitTarget  = parseFloat(s[0])  || 2070;
+    var unitsSold   = parseFloat(s[2])  || 0;   // col C
+    var revTarget   = parseFloat(s[6])  || 1313;
+    var revAchieved = parseFloat(s[8])  || 0;   // col I
+    var activeTeam  = parseFloat(s[12]) || 0;
+
+    // ── Projects + BSP from Combined Sales Log
+    var projectRows = [], bspRows = [];
+    if (salesSheet) {
+      var all = salesSheet.getDataRange().getValues();
+      var projHdr = -1, bspHdr = -1;
+      for (var i = 0; i < all.length; i++) {
+        var j = all[i].join('|').toLowerCase();
+        if (j.indexOf('unit target') > -1 && j.indexOf('project') > -1 && projHdr < 0) projHdr = i;
+        if (j.indexOf('avg bsp') > -1 && bspHdr < 0) bspHdr = i;
+      }
+      if (projHdr > -1) {
+        for (var r = projHdr + 1; r < all.length; r++) {
+          var row = all[r];
+          if (!row[0] || !row[0].toString().trim()) break;
+          projectRows.push({ name: row[0].toString(), uTarget: parseFloat(row[1])||0,
+            uSold: parseFloat(row[2])||0, revTarget: parseFloat(row[4])||0,
+            revAch: parseFloat(row[5])||0, bsp: 0, priority: row[11]||'Low' });
+        }
+      }
+      if (bspHdr > -1) {
+        for (var b = bspHdr + 1; b < all.length; b++) {
+          var br = all[b];
+          if (!br[0] || !br[0].toString().trim()) break;
+          var bv = parseFloat(br[1]) || 0;
+          if (bv > 0) {
+            bspRows.push({ project: br[0].toString(), avgBsp: bv });
+            var m = projectRows.filter(function(p){ return p.name === br[0].toString(); });
+            if (m.length) m[0].bsp = bv;
+          }
+        }
+      }
+    }
+
+    // ── Team + CTC burn from P&L sheet
+    var teamRows = [], zeroSaleBurn = 0;
+    if (plSheet) {
+      var pl = plSheet.getDataRange().getValues();
+      var spHdr = -1;
+      for (var m = 0; m < pl.length; m++) {
+        if (pl[m].join('|').toLowerCase().indexOf('monthly ctc') > -1) { spHdr = m; break; }
+      }
+      if (spHdr > -1) {
+        for (var n = spHdr + 1; n < pl.length; n++) {
+          var tr = pl[n];
+          if (!tr[0] || !tr[0].toString().trim()) break;
+          var monthly = parseFloat(tr[1]) || 0;
+          var annual  = parseFloat(tr[2]) || monthly * 12;
+          var us      = parseFloat(tr[3]) || 0;
+          var rv      = parseFloat(tr[4]) || 0;
+          var annL    = Math.round(annual / 1000) / 100;
+          var roi     = (annual > 0 && rv > 0) ? Math.round(rv * 10000000 / annual * 100) / 100 : 0;
+          var nm      = tr[0].toString();
+          var shivaji = ['Mayur Anarse','Subham','Priyanka','Suvarna','Disha','Pranjali',
+                         'Vrushali','Rutuja','Himanshu','Ajay','Roshani'];
+          if (us === 0) zeroSaleBurn += annL;
+          teamRows.push({ name: nm, cluster: shivaji.indexOf(nm) > -1 ? 'Shivaji' : 'Prashant',
+            units: us, revenue: rv, ctc: annL, roi: roi });
+        }
+      }
+    }
+
+    // ── Weekly pacer rows
+    var weeks = [];
+    var vpAll = vpSheet.getDataRange().getValues();
+    for (var p = 0; p < vpAll.length; p++) {
+      var pw = vpAll[p];
+      if (pw[0] && pw[0].toString().match(/^Wk\d/i))
+        weeks.push({ week: pw[0].toString(), period: (pw[1]||'').toString(),
+          actual: parseFloat(pw[2])||0, target: parseFloat(pw[3])||0 });
+    }
+
+    var data = {
+      revAchieved: revAchieved, revTarget: revTarget,
+      unitsAchieved: unitsSold, unitsTarget: unitTarget,
+      convRate: 98.0,
+      zeroSaleBurn: Math.round(zeroSaleBurn * 100) / 100,
+      projects: projectRows,
+      bsp:      bspRows,
+      team:     teamRows.length ? teamRows : null,
+      weeks:    weeks.length    ? weeks    : null
     };
-    
-    return ContentService
-      .createTextOutput(JSON.stringify(data))
+
+    return ContentService.createTextOutput(JSON.stringify(data))
       .setMimeType(ContentService.MimeType.JSON);
   } catch(err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ error: err.message }))
+    return ContentService.createTextOutput(JSON.stringify({ error: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
