@@ -1256,32 +1256,40 @@ function renderAll(d) {
 // ──────────────────────────────────────────────────────────────
 // KPIs
 function renderKPIs(d) {
-  const revPct = (d.revAchieved / d.revTarget * 100).toFixed(1);
-  const unitPct = (d.unitsAchieved / d.unitsTarget * 100).toFixed(1);
+  const revAch   = Number(d.revAchieved)  || 0;
+  const units    = Number(d.unitsAchieved)|| 0;
+  const revTgt   = Number(d.revTarget)    || 1313;
+  const unitsTgt = Number(d.unitsTarget)  || 2070;
+
+  const revPct  = (revAch  / revTgt   * 100).toFixed(1);
+  const unitPct = (units   / unitsTgt * 100).toFixed(1);
 
   set('k-rev-pct',  revPct + '%');
-  set('k-rev-sub',  '₹' + d.revAchieved.toFixed(1) + ' Cr of ₹' + d.revTarget + ' Cr');
+  set('k-rev-sub',  '₹' + revAch.toFixed(1) + ' Cr of ₹' + revTgt + ' Cr');
   set('k-unit-pct', unitPct + '%');
-  set('k-unit-sub', d.unitsAchieved + ' of ' + d.unitsTarget + ' target');
+  set('k-unit-sub', units + ' of ' + unitsTgt + ' target');
   set('k-recovery', '₹0');
-  set('k-conv',     d.convRate + '%');
-  set('k-burn',     '₹' + d.zeroSaleBurn);
+  set('k-conv',     (Number(d.convRate) || 98) + '%');
+  set('k-burn',     '₹' + (Number(d.zeroSaleBurn) || 39.85).toFixed(2));
 
-  // Compute actual weekly run rate from weeks data (sanitised — ignore pacer summary rows)
+  // Weekly run rate from weeks data
   const weeksData = (d.weeks || STATIC.weeks).filter(w =>
     w.week && String(w.week).match(/Wk|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i) &&
     Number(w.actual) < 500
   );
   const weeklyRunRate = weeksData.length
     ? (weeksData.reduce((s,w) => s + Number(w.actual), 0) / weeksData.length).toFixed(1)
-    : '12.4';
+    : '12.5';
   set('k-pace', weeklyRunRate + '/wk');
 
-  // Year-end forecast based on computed run rate
-  const forecastUnits = Math.round(d.unitsAchieved + parseFloat(weeklyRunRate) * 4.3 * 10);
-  set('k-forecast', '~₹' + Math.round(d.revAchieved / d.unitsAchieved * forecastUnits) + ' Cr');
+  // Year-end forecast — safe division, months remaining = 10
+  const monthsLeft   = 10;
+  const forecastUnits = units + Math.round(parseFloat(weeklyRunRate) * 4.3 * monthsLeft);
+  const avgRevPerUnit = units > 0 ? revAch / units : (revAch > 0 ? revAch / 1 : 0.578);
+  const forecastRev   = Math.round(avgRevPerUnit * forecastUnits);
+  set('k-forecast', '~₹' + forecastRev + ' Cr');
 
-  const activeSales = d.team ? d.team.filter(t => t.units > 0).length : 15;
+  const activeSales = d.team ? d.team.filter(t => Number(t.units) > 0).length : 15;
   set('k-team', activeSales);
   set('k-team-sub', 'of ' + (d.team ? d.team.length : 21) + ' total');
 }
@@ -1468,20 +1476,30 @@ function renderBriefing(d) {
 function renderPortfolio(d) {
   const projs = d.projects || STATIC.projects;
 
+  // Round all revenue values defensively (live data may be raw ₹ not Cr)
+  const safe = projs.map(p => ({
+    ...p,
+    revAch:    Math.round(Number(p.revAch)    * 100) / 100,
+    revTarget: Math.round(Number(p.revTarget) * 100) / 100,
+    bsp:    Math.round(Number(p.bsp)    || 0),
+    minBSP: Math.round(Number(p.minBSP) || 0),
+    maxBSP: Math.round(Number(p.maxBSP) || 0),
+  }));
+
   // Matrix
-  document.getElementById('portfolioMatrix').innerHTML = projs.map(p => {
+  document.getElementById('portfolioMatrix').innerHTML = safe.map(p => {
     const pct = p.revTarget > 0 ? Math.round(p.revAch / p.revTarget * 100) : 0;
     const cls = pct >= 100 ? 'hit' : pct >= 30 ? 'mid' : pct > 0 ? 'low' : 'zero';
     return `<div class="matrix-cell ${cls}">
       <div class="mc-name" style="color:var(--text2);font-size:11px;">${p.name}</div>
       <div class="mc-pct">${pct}%</div>
-      <div class="mc-rev">₹${p.revAch} / ₹${p.revTarget} Cr</div>
+      <div class="mc-rev">₹${p.revAch.toFixed(2)} / ₹${p.revTarget.toFixed(2)} Cr</div>
     </div>`;
   }).join('');
 
   // Bar rows
   const maxPct = 450;
-  document.getElementById('projBars').innerHTML = projs.map(p => {
+  document.getElementById('projBars').innerHTML = safe.map(p => {
     const pct = p.revTarget > 0 ? (p.revAch / p.revTarget * 100) : 0;
     const w = Math.min(pct, maxPct) / maxPct * 100;
     const color = pct >= 100 ? '#4ea86b' : pct >= 30 ? '#c9a84c' : '#e05555';
@@ -1491,23 +1509,55 @@ function renderPortfolio(d) {
       <div class="bar-val">${pct.toFixed(0)}%</div>
     </div>`;
   }).join('');
+
+  // BSP chart — rebuild with live data if available
+  if (charts.bsp) { charts.bsp.destroy(); delete charts.bsp; }
+  const bspProjs = safe.filter(p => p.bsp > 0);
+  const bspCanvas = document.getElementById('bspChart');
+  if (bspCanvas && bspProjs.length > 0) {
+    charts.bsp = new Chart(bspCanvas, {
+      type: 'bar',
+      data: {
+        labels: bspProjs.map(p => p.name),
+        datasets: [
+          { label: 'Avg BSP', data: bspProjs.map(p => p.bsp), backgroundColor: '#8b1a1a', borderRadius: 3, barPercentage: 0.5 },
+          { label: 'Min BSP', data: bspProjs.map(p => p.minBSP || p.bsp), backgroundColor: 'rgba(139,26,26,0.25)', borderRadius: 3, barPercentage: 0.5 },
+          { label: 'Max BSP', data: bspProjs.map(p => p.maxBSP || p.bsp), backgroundColor: 'rgba(200,168,60,0.5)', borderRadius: 3, barPercentage: 0.5 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'top', labels: { font: { size: 10, family: 'DM Sans' }, color: '#4a4a50', boxWidth: 10 } },
+          tooltip: { backgroundColor:'#fff', borderColor:'#e0e0e4', borderWidth:1, titleColor:'#1a1a1f', bodyColor:'#5a5760', padding:10 }
+        },
+        scales: {
+          x: { ticks: { color:'#4a4a50', font:{ size:10 } }, grid:{ display:false } },
+          y: { ticks: { color:'#4a4a50', font:{ size:10 }, callback: v => '₹'+v.toLocaleString('en-IN') }, grid:{ color:'rgba(0,0,0,0.05)' } }
+        }
+      }
+    });
+  }
 }
 
 function updateScenario(val) {
-  const v = parseInt(val);
-  document.getElementById('scnVal').textContent = v;
-  const projected = 99 + v * 10;
-  const pct = (projected / 2070 * 100).toFixed(1);
-  const gap = Math.max(0, 200 - v);
-  const estRev = (projected * (56.9 / 99)).toFixed(0);
+  const v          = parseInt(val);
+  const unitsNow   = Number((data || STATIC).unitsAchieved) || 100;
+  const revNow     = Number((data || STATIC).revAchieved)   || 57.8;
+  const avgRev     = unitsNow > 0 ? revNow / unitsNow : 0.578;
+  const projected  = unitsNow + v * 10;
+  const pct        = (projected / 2070 * 100).toFixed(1);
+  const gap        = Math.max(0, 200 - v);
+  const estRev     = (projected * avgRev).toFixed(0);
 
+  document.getElementById('scnVal').textContent = v;
   document.getElementById('scnNum').textContent = projected.toLocaleString('en-IN');
   document.getElementById('scnSub').textContent = pct + '% of 2,070 target';
   document.getElementById('scnGap').textContent = gap > 0 ? gap + '/mo' : '0 — on track';
   document.getElementById('scnRevForecast').textContent = '₹' + estRev + ' Cr';
 
   const feasEl = document.getElementById('scnFeas');
-  const numEl = document.getElementById('scnNum');
+  const numEl  = document.getElementById('scnNum');
   if (v >= 200) {
     feasEl.textContent = 'On track'; feasEl.className = 'sval ok';
     numEl.style.color = '#4ea86b';
