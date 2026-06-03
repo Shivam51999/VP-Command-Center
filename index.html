@@ -762,8 +762,7 @@
           </div>
           <div class="scenario-row">
             <span class="slabel">Current run rate</span>
-            <span class="sval bad">~50/mo</span>
-          </div>
+            <span class="sval bad">~50/mo</span>          </div>
           <div class="scenario-row">
             <span class="slabel">Gap to close</span>
             <span class="sval bad" id="scnGap">150/mo</span>
@@ -919,8 +918,8 @@
       </div>
       <div class="kpi-card warn">
         <div class="kpi-label">Revenue Booked (not collected)</div>
-        <div class="kpi-value" id="r-booked">₹56.9 Cr</div>
-        <div class="kpi-sub">From 99 bookings</div>
+        <div class="kpi-value" id="r-booked">₹57.8 Cr</div>
+        <div class="kpi-sub">From 100 bookings</div>
       </div>
     </div>
 
@@ -1012,37 +1011,37 @@
 // ─── CONFIGURATION ───────────────────────────────────────────
 const CONFIG = {
   SHEET_ID: '1CDbbnFDMfJW2Bn3m4qwNtFCfJvlDDx0ztl6kXFvALV4',
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyD4NvXJbMb3jooE4KHpmzAbkvBiOJ6Ejz40SKz-E043blt_v31tzK5ggKllkorH4MQUg/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxk8hQQB3mnFOBMpE_VlDjxIAFiOUju5NDCd9TrfK7UKGpLfVYc-Xx5WNQm3N5FwyG3OA/exec',
 };
 
 // ─── STATIC DATA (used as fallback when offline) ──────────────
 const STATIC = {
-  revAchieved: 56.9,
+  revAchieved: 57.8,
   revTarget: 1313,
-  unitsAchieved: 99,
+  unitsAchieved: 100,
   unitsTarget: 2070,
-  weeklyRate: 12.4,
+  weeklyRate: 12.5,
   requiredRate: 45.5,
   convRate: 98.0,
   zeroSaleBurn: 39.85,
 
   projects: [
-    { name: 'Lifepark',       uTarget:7,   uSold:19,  revTarget:2,    revAch:8.65,  bsp:4984, priority:'Low'  },
-    { name: 'Breeze',         uTarget:19,  uSold:0,   revTarget:3.65, revAch:0,     bsp:0,    priority:'Low'  },
-    { name: 'Melizma',        uTarget:18,  uSold:8,   revTarget:8,    revAch:4.91,  bsp:5952, priority:'Low'  },
-    { name: 'Miraya',         uTarget:40,  uSold:0,   revTarget:31,   revAch:0,     bsp:0,    priority:'Low'  },
-    { name: 'Marvel',         uTarget:36,  uSold:16,  revTarget:20,   revAch:8.19,  bsp:4646, priority:'Low'  },
-    { name: 'Icon',           uTarget:8,   uSold:0,   revTarget:5,    revAch:0,     bsp:0,    priority:'Low'  },
-    { name: 'Niyoshi',        uTarget:11,  uSold:1,   revTarget:14,   revAch:1.91,  bsp:12315,priority:'Low'  },
-    { name: 'Shyni',          uTarget:45,  uSold:7,   revTarget:31,   revAch:4.98,  bsp:7014, priority:'Low'  },
-    { name: 'Midas City',     uTarget:300, uSold:15,  revTarget:169,  revAch:8.32,  bsp:5096, priority:'High' },
-    { name: 'Aikyam',         uTarget:200, uSold:17,  revTarget:162,  revAch:12.98, bsp:6651, priority:'High' },
-    { name: 'Mithila-1',      uTarget:86,  uSold:16,  revTarget:32,   revAch:7.01,  bsp:4846, priority:'Low'  },
-    { name: 'Mithila-2',      uTarget:200, uSold:0,   revTarget:110,  revAch:0,     bsp:0,    priority:'High' },
-    { name: 'Myra',           uTarget:100, uSold:0,   revTarget:53,   revAch:0,     bsp:0,    priority:'Medium'},
-    { name: 'Starview',       uTarget:400, uSold:0,   revTarget:278,  revAch:0,     bsp:0,    priority:'High' },
-    { name: 'Momento',        uTarget:300, uSold:0,   revTarget:209,  revAch:0,     bsp:0,    priority:'High' },
-    { name: 'Borhadewadi-1',  uTarget:300, uSold:0,   revTarget:185,  revAch:0,     bsp:0,    priority:'High' },
+    { name: 'Lifepark',       uTarget:7,   uSold:19,  revTarget:2.00,  revAch:8.65,  bsp:4984,  priority:'Low'   },
+    { name: 'Breeze (Mhada)', uTarget:19,  uSold:0,   revTarget:3.65,  revAch:0,     bsp:0,     priority:'Low'   },
+    { name: 'Melizma',        uTarget:18,  uSold:8,   revTarget:8.00,  revAch:4.91,  bsp:5952,  priority:'Low'   },
+    { name: 'Miraya',         uTarget:40,  uSold:0,   revTarget:31.00, revAch:0,     bsp:0,     priority:'Low'   },
+    { name: 'Marvel',         uTarget:36,  uSold:16,  revTarget:20.00, revAch:8.19,  bsp:4646,  priority:'Low'   },
+    { name: 'Icon',           uTarget:8,   uSold:0,   revTarget:5.00,  revAch:0,     bsp:0,     priority:'Low'   },
+    { name: 'Niyoshi',        uTarget:11,  uSold:1,   revTarget:14.00, revAch:1.91,  bsp:12315, priority:'Low'   },
+    { name: 'Shyni',          uTarget:45,  uSold:7,   revTarget:31.00, revAch:4.98,  bsp:7014,  priority:'Low'   },
+    { name: 'Midas City',     uTarget:300, uSold:15,  revTarget:169.00,revAch:8.32,  bsp:5096,  priority:'High'  },
+    { name: 'Aikyam',         uTarget:200, uSold:18,  revTarget:162.00,revAch:13.82, bsp:6667,  priority:'High'  },
+    { name: 'Mithila-1',      uTarget:86,  uSold:16,  revTarget:32.00, revAch:7.01,  bsp:4846,  priority:'Low'   },
+    { name: 'Mithila-2',      uTarget:200, uSold:0,   revTarget:110.00,revAch:0,     bsp:0,     priority:'High'  },
+    { name: 'Myra',           uTarget:100, uSold:0,   revTarget:53.00, revAch:0,     bsp:0,     priority:'Medium'},
+    { name: 'Starview',       uTarget:400, uSold:0,   revTarget:278.00,revAch:0,     bsp:0,     priority:'High'  },
+    { name: 'Momento',        uTarget:300, uSold:0,   revTarget:209.00,revAch:0,     bsp:0,     priority:'High'  },
+    { name: 'Borhadewadi-1',  uTarget:300, uSold:0,   revTarget:185.00,revAch:0,     bsp:0,     priority:'High'  },
   ],
 
   team: [
@@ -1060,7 +1059,7 @@ const STATIC = {
     { name:'Avinash',       cluster:'Prashant', units:3,  revenue:2.20,  ctc:5.42,  roi:40.64  },
     { name:'Prince',        cluster:'Prashant', units:2,  revenue:1.76,  ctc:6.84,  roi:25.77  },
     { name:'Asha',          cluster:'Prashant', units:1,  revenue:0.49,  ctc:6.34,  roi:7.68   },
-    { name:'Sujata',        cluster:'Prashant', units:1,  revenue:0.81,  ctc:5.28,  roi:15.30  },
+    { name:'Sujata',        cluster:'Prashant', units:2,  revenue:1.65,  ctc:5.28,  roi:31.16  },
     { name:'Subham',        cluster:'Shivaji',  units:0,  revenue:0,     ctc:5.15,  roi:0      },
     { name:'Priyanka',      cluster:'Shivaji',  units:0,  revenue:0,     ctc:5.57,  roi:0      },
     { name:'Vikash',        cluster:'Prashant', units:0,  revenue:0,     ctc:7.68,  roi:0      },
@@ -1070,29 +1069,33 @@ const STATIC = {
   ],
 
   weeks: [
-    { week:'Wk1 Apr', period:'01–07 Apr', actual:6,  target:46 },
-    { week:'Wk2 Apr', period:'08–14 Apr', actual:6,  target:46 },
-    { week:'Wk3 Apr', period:'15–21 Apr', actual:8,  target:46 },
-    { week:'Wk4 Apr', period:'22–30 Apr', actual:11, target:46 },
-    { week:'Wk1 May', period:'01–07 May', actual:13, target:46 },
-    { week:'Wk2 May', period:'08–14 May', actual:11, target:46 },
-    { week:'Wk3 May', period:'15–21 May', actual:15, target:46 },
-    { week:'Wk4 May', period:'22–31 May', actual:24, target:46 },
+    { week:'Wk1 Apr', period:'01–07 Apr', actual:6,  target:45 },
+    { week:'Wk2 Apr', period:'08–14 Apr', actual:6,  target:45 },
+    { week:'Wk3 Apr', period:'15–21 Apr', actual:8,  target:45 },
+    { week:'Wk4 Apr', period:'22–30 Apr', actual:11, target:45 },
+    { week:'Wk1 May', period:'01–07 May', actual:13, target:45 },
+    { week:'Wk2 May', period:'08–14 May', actual:11, target:45 },
+    { week:'Wk3 May', period:'15–21 May', actual:15, target:45 },
+    { week:'Wk4 May', period:'22–31 May', actual:24, target:45 },
   ],
 
   recovery: [
-    { project:'Starview',    target:150, priority:'High' },
-    { project:'Miraya',      target:96,  priority:'Low'  },
-    { project:'Aikyam',      target:150, priority:'High' },
-    { project:'Midas City',  target:110, priority:'High' },
-    { project:'Mithila-2',   target:58,  priority:'High' },
-    { project:'Momento',     target:90,  priority:'High' },
-    { project:'Borhadewadi', target:90,  priority:'High' },
-    { project:'Marvel',      target:41,  priority:'Low'  },
-    { project:'Melizma',     target:39,  priority:'Low'  },
-    { project:'Lifepark',    target:37,  priority:'Low'  },
-    { project:'Myra',        target:21,  priority:'Medium'},
-    { project:'Mithila-1',   target:26,  priority:'Low'  },
+    { project:'Starview',       target:150.00, priority:'High'   },
+    { project:'Aikyam',         target:150.00, priority:'High'   },
+    { project:'Midas City',     target:110.00, priority:'High'   },
+    { project:'Miraya',         target:96.00,  priority:'Low'    },
+    { project:'Momento',        target:90.00,  priority:'High'   },
+    { project:'Borhadewadi-1',  target:90.00,  priority:'High'   },
+    { project:'Mithila-2',      target:58.00,  priority:'High'   },
+    { project:'Marvel',         target:41.00,  priority:'Low'    },
+    { project:'Melizma',        target:39.22,  priority:'Low'    },
+    { project:'Lifepark',       target:37.00,  priority:'Low'    },
+    { project:'Shyni',          target:22.00,  priority:'Low'    },
+    { project:'Niyoshi',        target:22.00,  priority:'Low'    },
+    { project:'Mithila-1',      target:26.00,  priority:'Low'    },
+    { project:'Myra',           target:21.00,  priority:'Medium' },
+    { project:'Icon',           target:5.00,   priority:'Low'    },
+    { project:'Breeze (Mhada)', target:3.65,   priority:'Low'    },
   ],
 
   leadSources: [
@@ -1103,17 +1106,20 @@ const STATIC = {
   ],
 
   salesLog: [
-    { date:'01/06/26', sp:'Roshani',      client:'Ishwardas Valecha', project:'Aikyam',    flat:'D-3002', rev:61.56, bsp:5410, src:'Walk-in',         status:'Booked' },
-    { date:'01/06/26', sp:'Roshani',      client:'Ishwardas Valecha', project:'Aikyam',    flat:'D-402',  rev:56.16, bsp:4935, src:'Walk-in',         status:'Booked' },
-    { date:'01/06/26', sp:'Disha',        client:'Tejas Bondage',     project:'Mithila-1', flat:'A-904',  rev:31.73, bsp:4801, src:'Channel Partners',status:'Booked' },
-    { date:'01/06/26', sp:'Disha',        client:'Narendra Varpe',    project:'Mithila-1', flat:'A-1408', rev:47.08, bsp:4905, src:'Channel Partners',status:'Booked' },
-    { date:'01/06/26', sp:'Mayur Anarse', client:'Swapnita Kharade',  project:'Lifepark',  flat:'I-304',  rev:43.70, bsp:4850, src:'Referral',        status:'Booked' },
-    { date:'31/05/26', sp:'Sachin',       client:'Sahil Kalghatgi',   project:'Melizma',   flat:'A-1302', rev:57.77, bsp:5956, src:'Walk-in',         status:'Booked' },
-    { date:'31/05/26', sp:'Shilpee',      client:'Unmesh Vilashrao',  project:'Aikyam',    flat:'D-1602', rev:78.30, bsp:6881, src:'Channel Partners',status:'Booked' },
-    { date:'31/05/26', sp:'Krushna',      client:'Jayshri Shinde',    project:'Marvel',    flat:'B-106',  rev:41.14, bsp:4607, src:'Channel Partners',status:'Booked' },
-    { date:'31/05/26', sp:'Suvarna',      client:'Samiksha Anil',     project:'Mithila-1', flat:'A-1007', rev:46.45, bsp:4828, src:'Channel Partners',status:'Booked' },
-    { date:'31/05/26', sp:'Pranjali',     client:'Chetan Rachod',     project:'Midas City',flat:'B-507',  rev:51.12, bsp:4920, src:'Referral',        status:'Booked' },
-    { date:'03/05/26', sp:'Shilpee',      client:'Harshal Amle',      project:'Aikyam',    flat:'D-2702', rev:78.31, bsp:6881, src:'Channel Partners',status:'Lost'   },
+    { date:'02/06/26', sp:'Sujata',       client:'Sagar Sakte',        project:'Aikyam',    flat:'D-1601', rev:83.72, bsp:6948, src:'Digital',         status:'Booked' },
+    { date:'01/06/26', sp:'Roshani',      client:'Ishwardas Valecha',  project:'Aikyam',    flat:'D-3002', rev:61.56, bsp:5410, src:'Walk-in',         status:'Booked' },
+    { date:'01/06/26', sp:'Roshani',      client:'Ishwardas Valecha',  project:'Aikyam',    flat:'D-402',  rev:56.16, bsp:4935, src:'Walk-in',         status:'Booked' },
+    { date:'01/06/26', sp:'Mayur Anarse', client:'Swapnita Kharade',   project:'Lifepark',  flat:'I-304',  rev:43.70, bsp:4850, src:'Referral',        status:'Booked' },
+    { date:'01/06/26', sp:'Disha',        client:'Narendra Varpe',     project:'Mithila-1', flat:'A-1408', rev:47.08, bsp:4905, src:'Channel Partners',status:'Booked' },
+    { date:'31/05/26', sp:'Pranjali',     client:'Chetan Rachod',      project:'Midas City',flat:'B-507',  rev:51.12, bsp:4920, src:'Referral',        status:'Booked' },
+    { date:'31/05/26', sp:'Suvarna',      client:'Samiksha Anil',      project:'Mithila-1', flat:'A-1007', rev:46.45, bsp:4828, src:'Channel Partners',status:'Booked' },
+    { date:'31/05/26', sp:'Krushna',      client:'Jayshri Shinde',     project:'Marvel',    flat:'B-106',  rev:41.14, bsp:4607, src:'Channel Partners',status:'Booked' },
+    { date:'31/05/26', sp:'Sachin',       client:'Sahil Kalghatgi',    project:'Melizma',   flat:'A-1302', rev:57.77, bsp:5956, src:'Walk-in',         status:'Booked' },
+    { date:'31/05/26', sp:'Shilpee',      client:'Unmesh Vilashrao',   project:'Aikyam',    flat:'D-1602', rev:78.30, bsp:6881, src:'Channel Partners',status:'Booked' },
+    { date:'29/05/26', sp:'Mayur Chavhan',client:'Ranjana Solanke',    project:'Aikyam',    flat:'D-2802', rev:78.75, bsp:6920, src:'Referral',        status:'Booked' },
+    { date:'28/05/26', sp:'Sachin',       client:'Rakesh Subudh',      project:'Melizma',   flat:'A-114',  rev:73.40, bsp:6350, src:'Referral',        status:'Booked' },
+    { date:'28/05/26', sp:'Krushna',      client:'Suraj Verma',        project:'Marvel',    flat:'C-1402', rev:46.90, bsp:4800, src:'Channel Partners',status:'Booked' },
+    { date:'03/05/26', sp:'Shilpee',      client:'Harshal Amle',       project:'Aikyam',    flat:'D-2702', rev:78.31, bsp:6881, src:'Channel Partners',status:'Lost'   },
   ]
 };
 
@@ -1693,6 +1699,8 @@ window.addEventListener('DOMContentLoaded', () => {
       ls.style.opacity = '0';
       setTimeout(() => ls.style.display = 'none', 300);
       fetchAllData();
+      // Auto-refresh every 5 minutes
+      setInterval(fetchAllData, 5 * 60 * 1000);
     }, 600);
   }, 800);
 });
