@@ -1204,9 +1204,12 @@ async function fetchAllData() {
     data = {
       ...STATIC,
       ...json,
-      team:     (json.team     && json.team.length)     ? json.team     : STATIC.team,
-      projects: (json.projects && json.projects.length) ? json.projects : STATIC.projects,
-      weeks:    (json.weeks    && json.weeks.length)    ? json.weeks    : STATIC.weeks,
+      projects:    (json.projects    && json.projects.length)    ? json.projects    : STATIC.projects,
+      weeks:       (json.weeks       && json.weeks.length)       ? json.weeks       : STATIC.weeks,
+      team:        (json.team        && json.team.length)        ? json.team        : STATIC.team,
+      recovery:    (json.recovery    && json.recovery.length)    ? json.recovery    : STATIC.recovery,
+      leadSources: (json.leadSources && json.leadSources.length) ? json.leadSources : STATIC.leadSources,
+      salesLog:    (json.salesLog    && json.salesLog.length)    ? json.salesLog    : STATIC.salesLog,
     };
     renderAll(data);
     setSync('live', 'Live · ' + new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }));
