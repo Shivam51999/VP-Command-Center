@@ -614,7 +614,11 @@
   <!-- ══════════════════════════════════
        PAGE: OVERVIEW
   ══════════════════════════════════════ -->
-  <div class="page active" id="page-overview">
+  <div id="debugPanel" style="display:none;position:fixed;bottom:16px;right:16px;z-index:9999;
+  background:#fff;border:1px solid #ccc;border-radius:8px;padding:14px 18px;
+  font-size:11px;font-family:monospace;max-width:320px;box-shadow:0 4px 20px rgba(0,0,0,0.15);
+  line-height:1.7;">Checking…</div>
+<div class="page active" id="page-overview">
 
     <div class="section-header" style="margin-bottom:16px;">
       <span class="section-title">Annual Plan — Health at a Glance</span>
@@ -1140,50 +1144,8 @@ function showPage(id) {
 
 // ──────────────────────────────────────────────────────────────
 // DATA FETCH
-// Apps Script always redirects before serving — this strips CORS headers.
-// Solution: JSONP with a stable global callback name registered BEFORE the
-// script tag is injected, so it survives the redirect chain.
-
-let _gsCallback = null; // stable global slot
-
-function fetchViaJsonp(url) {
-  return new Promise((resolve, reject) => {
-    const cbName = 'gsRelay';          // simple, stable name
-    let settled = false;
-
-    const timeout = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      window[cbName] = null;
-      reject(new Error('Timeout'));
-    }, 20000);                         // 20s — Apps Script can be slow
-
-    // Register callback BEFORE injecting script tag
-    window[cbName] = (d) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeout);
-      window[cbName] = null;
-      resolve(d);
-    };
-
-    const script = document.createElement('script');
-    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
-
-    // onerror fires on network failure only — NOT on redirect.
-    // So we do NOT reject here; we let the timeout handle true failures.
-    script.onerror = () => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeout);
-      window[cbName] = null;
-      if (script.parentNode) script.parentNode.removeChild(script);
-      reject(new Error('Script load error'));
-    };
-
-    document.head.appendChild(script);
-  });
-}
+// Fetches via /api/sheet — a Vercel serverless proxy that calls Apps Script
+// server-side, eliminating all CORS and redirect issues entirely.
 
 async function fetchAllData() {
   const btn = document.getElementById('refreshBtn');
@@ -1194,10 +1156,30 @@ async function fetchAllData() {
   let json = null;
 
   try {
-    json = await fetchViaJsonp(CONFIG.APPS_SCRIPT_URL);
+    const res = await fetch('/api/sheet', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    json = await res.json();
     console.log('Live data loaded:', json);
   } catch (e1) {
-    console.warn('JSONP failed:', e1.message);
+    console.warn('Proxy fetch failed:', e1.message);
+  }
+
+  // ── Debug panel (remove after live data confirmed working) ──
+  const dbg = document.getElementById('debugPanel');
+  if (dbg) {
+    if (json) {
+      dbg.innerHTML = '<b style="color:green">✅ Script reached. Raw values:</b><br>' +
+        'unitsAchieved: ' + json.unitsAchieved + '<br>' +
+        'revAchieved: '   + json.revAchieved   + '<br>' +
+        'zeroSaleBurn: '  + json.zeroSaleBurn  + '<br>' +
+        'projects count: '+ (json.projects ? json.projects.length : 'null') + '<br>' +
+        'team count: '    + (json.team     ? json.team.length     : 'null') + '<br>' +
+        'weeks count: '   + (json.weeks    ? json.weeks.length    : 'null') + '<br>' +
+        'error: '         + (json.error    || 'none');
+    } else {
+      dbg.innerHTML = '<b style="color:red">❌ Script unreachable — using static data</b>';
+    }
+    dbg.style.display = 'block';
   }
 
   if (json && !json.error) {
