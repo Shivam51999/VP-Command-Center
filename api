@@ -1,18 +1,32 @@
-// Vercel serverless function — proxies Apps Script to avoid CORS
-// Deploy this alongside index.html on Vercel
+// Vercel serverless proxy — uses Node built-in https (no dependencies needed)
+const https = require('https');
 
-export default async function handler(req, res) {
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyD4NvXJbMb3jooE4KHpmzAbkvBiOJ6Ejz40SKz-E043blt_v31tzK5ggKllkorH4MQUg/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyD4NvXJbMb3jooE4KHpmzAbkvBiOJ6Ejz40SKz-E043blt_v31tzK5ggKllkorH4MQUg/exec';
+
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate');
 
   try {
-    const response = await fetch(APPS_SCRIPT_URL, {
-      redirect: 'follow',
-      headers: { 'Accept': 'application/json' }
+    const text = await new Promise((resolve, reject) => {
+      // Apps Script redirects — follow up to 5 redirects manually
+      function doRequest(url, redirects) {
+        if (redirects > 5) return reject(new Error('Too many redirects'));
+        https.get(url, (response) => {
+          // Follow redirects
+          if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+            return doRequest(response.headers.location, redirects + 1);
+          }
+          let data = '';
+          response.on('data', chunk => data += chunk);
+          response.on('end', () => resolve(data));
+          response.on('error', reject);
+        }).on('error', reject);
+      }
+      doRequest(APPS_SCRIPT_URL, 0);
     });
 
-    const text = await response.text();
-
-    // Strip JSONP wrapper if present
+    // Strip JSONP wrapper if present: gsRelay({...}) → {...}
     const stripped = text.trim()
       .replace(/^[^\(]+\(/, '')
       .replace(/\);?\s*$/, '');
@@ -24,12 +38,9 @@ export default async function handler(req, res) {
       data = JSON.parse(text);
     }
 
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', 's-maxage=120'); // cache 2 mins on Vercel edge
     res.status(200).json(data);
 
   } catch (err) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
     res.status(500).json({ error: err.message });
   }
 }
