@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "api/sheet.js": {
-      "maxDuration": 30
-    }
-  }
-}
