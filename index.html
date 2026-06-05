@@ -833,7 +833,7 @@
           <div id="pipList"></div>
           <div style="margin-top:12px; padding: 10px 12px; background: rgba(224,85,85,0.05); border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
             <span style="font-size:12px; color:var(--text3);">Total annual burn</span>
-            <span style="font-size:16px; font-weight:700; color:var(--red);" id="totalBurn">₹39.85 L/yr</span>
+            <span style="font-size:16px; font-weight:700; color:var(--red);" id="totalBurn">₹29.14 L/yr</span>
           </div>
         </div>
       </div>
@@ -1027,7 +1027,7 @@ const STATIC = {
   weeklyRate: 12.5,
   requiredRate: 45.5,
   convRate: 98.0,
-  zeroSaleBurn: 39.85,
+  zeroSaleBurn: 29.14,
 
   projects: [
     { name: 'Lifepark',       uTarget:7,   uSold:19,  revTarget:2.00,  revAch:8.65,  bsp:4984,  priority:'Low'   },
@@ -1064,8 +1064,8 @@ const STATIC = {
     { name:'Prince',        cluster:'Prashant', units:2,  revenue:1.76,  ctc:6.84,  roi:25.77  },
     { name:'Asha',          cluster:'Prashant', units:1,  revenue:0.49,  ctc:6.34,  roi:7.68   },
     { name:'Sujata',        cluster:'Prashant', units:2,  revenue:1.65,  ctc:5.28,  roi:31.16  },
-    { name:'Subham',        cluster:'Shivaji',  units:0,  revenue:0,     ctc:5.15,  roi:0      },
-    { name:'Priyanka',      cluster:'Shivaji',  units:0,  revenue:0,     ctc:5.57,  roi:0      },
+    { name:'Subham Gawade', cluster:'Shivaji',  units:0,  revenue:0,     ctc:5.15,  roi:0      },
+    { name:'Priyanka Thorat',cluster:'Shivaji', units:0,  revenue:0,     ctc:5.57,  roi:0      },
     { name:'Vikash',        cluster:'Prashant', units:0,  revenue:0,     ctc:7.68,  roi:0      },
     { name:'Himanshu',      cluster:'Shivaji',  units:0,  revenue:0,     ctc:6.82,  roi:0      },
     { name:'Ketan',         cluster:'Prashant', units:0,  revenue:0,     ctc:6.96,  roi:0      },
@@ -1269,7 +1269,7 @@ function renderKPIs(d) {
   set('k-unit-sub', units + ' of ' + unitsTgt + ' target');
   set('k-recovery', '₹0');
   set('k-conv',     (Number(d.convRate) || 98) + '%');
-  set('k-burn',     '₹' + (Number(d.zeroSaleBurn) || 39.85).toFixed(2));
+  set('k-burn',     '₹' + (Number(d.zeroSaleBurn) || 29.14).toFixed(2));
 
   // Weekly run rate from weeks data
   const weeksData = (d.weeks || STATIC.weeks).filter(w =>
@@ -1435,7 +1435,7 @@ function renderBriefing(d) {
 
   const alerts = [
     { type:'p1', icon:'🔴', title:'5 high-priority projects: 0 bookings — ₹835 Cr revenue gap', desc:'Starview (₹278 Cr), Momento (₹209 Cr), Borhadewadi-1 (₹185 Cr), Mithila-2 (₹110 Cr), Myra (₹53 Cr) have zero bookings this year. These alone represent 64% of the annual target.', action:'Decision: Launch readiness review + assign cluster heads within 7 days', actionClass:'action-red' },
-    { type:'p1', icon:'🔴', title:'6 salespeople with zero sales — ₹39.85 L CTC burn with ₹0 revenue', desc:'Vikash (₹7.68L), Ajay (₹7.68L), Ketan (₹6.96L), Himanshu (₹6.82L), Subham (₹5.15L), Priyanka (₹5.57L) — all Managers or senior reps, all zero bookings.', action:'Decision: Issue PIP letters within 30 days or reassign to active project sites', actionClass:'action-red' },
+    { type:'p1', icon:'🔴', title:'4 salespeople with zero sales — ₹29.14 L CTC burn with ₹0 revenue', desc:'Vikash (₹7.68L), Ajay (₹7.68L), Ketan (₹6.96L), Himanshu (₹6.82L) — all Managers or senior reps, all zero bookings.', action:'Decision: Issue PIP letters within 30 days or reassign to active project sites', actionClass:'action-red' },
     { type:'p1', icon:'🔴', title:'Collections at ₹0 — ₹961 Cr recovery completely untracked', desc:'Recovery log shows #REF! error. No payment entries exist across any of the 16 projects. If even 10% of ₹961 Cr target is outstanding, ₹96 Cr in cash flow is invisible to leadership.', action:'Decision: Mandate Friday collections entry. Assign one person per cluster to own this.', actionClass:'action-red' },
     { type:'p2', icon:'🟡', title:'Booking pace is 3.6× below minimum — annual target at severe risk', desc:'Running at 12.4 bookings/week; need 45.5/week to hit 2,070 by March 2027. At current pace, year-end projection is ~599 units (28.9% achievement).', action:'Decision: Increase CP network activation, launch digital campaign for Midas City and Aikyam this week', actionClass:'action-amber' },
     { type:'p2', icon:'🟡', title:'Miraya: 0 bookings despite ₹96 Cr recovery target', desc:'Miraya has a ₹96 Cr recovery target with 40 units unsold and 0% achievement. This suggests a project-level block — possibly approvals, construction delay, or pricing issue.', action:'Decision: Investigate Miraya project status with COO. Is this project launchable this FY?', actionClass:'action-amber' },
@@ -1824,7 +1824,7 @@ function doGet(e) {
       unitsAchieved: Number(row[2]) || 100,
       revAchieved:   Number(row[10]) || 57.8,
       convRate:      98.0,
-      zeroSaleBurn:  39.85,
+      zeroSaleBurn:  29.14,
       weeks: weeks.length >= 2 ? weeks : null,
       team:  team.length  >= 5 ? team  : null,
     };
