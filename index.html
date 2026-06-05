@@ -784,10 +784,8 @@
     </div>
 
     <div class="card">
-      <div class="card-title">BSP Benchmark — Avg ₹/sqft by Project</div>
-      <div class="chart-wrap" style="height:220px;">
-        <canvas id="bspChart" role="img" aria-label="BSP by project bar chart"></canvas>
-      </div>
+      <div class="card-title">BSP Benchmark — ₹/sqft by Project</div>
+      <div id="bspTable"></div>
     </div>
   </div>
 
@@ -1512,33 +1510,31 @@ function renderPortfolio(d) {
     </div>`;
   }).join('');
 
-  // BSP chart — rebuild with live data if available
+  // BSP numbers table
   if (charts.bsp) { charts.bsp.destroy(); delete charts.bsp; }
   const bspProjs = safe.filter(p => p.bsp > 0);
-  const bspCanvas = document.getElementById('bspChart');
-  if (bspCanvas && bspProjs.length > 0) {
-    charts.bsp = new Chart(bspCanvas, {
-      type: 'bar',
-      data: {
-        labels: bspProjs.map(p => p.name),
-        datasets: [
-          { label: 'Avg BSP', data: bspProjs.map(p => p.bsp), backgroundColor: '#8b1a1a', borderRadius: 3, barPercentage: 0.5 },
-          { label: 'Min BSP', data: bspProjs.map(p => p.minBSP || p.bsp), backgroundColor: 'rgba(139,26,26,0.25)', borderRadius: 3, barPercentage: 0.5 },
-          { label: 'Max BSP', data: bspProjs.map(p => p.maxBSP || p.bsp), backgroundColor: 'rgba(200,168,60,0.5)', borderRadius: 3, barPercentage: 0.5 },
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display: true, position: 'top', labels: { font: { size: 10, family: 'DM Sans' }, color: '#4a4a50', boxWidth: 10 } },
-          tooltip: { backgroundColor:'#fff', borderColor:'#e0e0e4', borderWidth:1, titleColor:'#1a1a1f', bodyColor:'#5a5760', padding:10 }
-        },
-        scales: {
-          x: { ticks: { color:'#4a4a50', font:{ size:10 } }, grid:{ display:false } },
-          y: { ticks: { color:'#4a4a50', font:{ size:10 }, callback: v => v.toLocaleString('en-IN') }, grid:{ color:'rgba(0,0,0,0.05)' } }
-        }
-      }
-    });
+  const bspTable = document.getElementById('bspTable');
+  if (bspTable) {
+    bspTable.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-family:var(--font-body);font-size:12px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border2);">
+            <th style="text-align:left;padding:7px 10px;color:var(--text3);font-weight:500;font-size:11px;">PROJECT</th>
+            <th style="text-align:right;padding:7px 10px;color:var(--text3);font-weight:500;font-size:11px;">MIN</th>
+            <th style="text-align:right;padding:7px 10px;color:var(--text3);font-weight:500;font-size:11px;">AVG</th>
+            <th style="text-align:right;padding:7px 10px;color:var(--text3);font-weight:500;font-size:11px;">MAX</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${bspProjs.map((p, i) => `
+            <tr style="border-bottom:0.5px solid var(--border);background:${i % 2 === 0 ? 'transparent' : 'var(--bg3)'};">
+              <td style="padding:8px 10px;color:var(--text2);font-weight:500;">${p.name}</td>
+              <td style="padding:8px 10px;text-align:right;color:var(--text3);">${(p.minBSP || p.bsp).toLocaleString('en-IN')}</td>
+              <td style="padding:8px 10px;text-align:right;color:var(--brand);font-weight:600;">${p.bsp.toLocaleString('en-IN')}</td>
+              <td style="padding:8px 10px;text-align:right;color:var(--text3);">${(p.maxBSP || p.bsp).toLocaleString('en-IN')}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
   }
 }
 
