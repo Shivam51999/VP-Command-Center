@@ -1193,9 +1193,12 @@ async function fetchAllData() {
     // Merge live team OVER STATIC team — so CTC values are never lost
     const liveTeamMap = {};
     (json.team || []).forEach(t => { liveTeamMap[t.name] = t; });
-    const mergedTeam = STATIC.team.map(st =>
-      liveTeamMap[st.name] ? { ...st, ...liveTeamMap[st.name] } : st
-    );
+    const mergedTeam = STATIC.team.map(st => {
+      const live = liveTeamMap[st.name];
+      if (!live) return st;
+      // Always preserve STATIC ctc — relay reads wrong column (Rev/₹1 CTC not annual CTC ₹L)
+      return { ...st, units: live.units ?? st.units, revenue: live.revenue || st.revenue, roi: live.roi || st.roi };
+    });
 
     data = {
       ...STATIC,
@@ -1576,8 +1579,11 @@ function renderTeam(d) {
   // Always overlay live data on STATIC team so CTC values are never missing
   const liveTeamMap = {};
   (d.team || []).forEach(t => { liveTeamMap[t.name] = t; });
-  const team = STATIC.team.map(st => liveTeamMap[st.name] ? { ...st, ...liveTeamMap[st.name] } : st)
-    .sort((a,b) => b.units - a.units);
+  const team = STATIC.team.map(st => {
+    const live = liveTeamMap[st.name];
+    if (!live) return st;
+    return { ...st, units: live.units ?? st.units, revenue: live.revenue || st.revenue, roi: live.roi || st.roi };
+  }).sort((a,b) => b.units - a.units);
 
   document.getElementById('teamTableBody').innerHTML = team.map(t => {
     const statusPill = t.units === 0
@@ -1803,11 +1809,16 @@ function doGet(e) {
       .filter(r => r[0] && String(r[0]).match(/Wk/i))
       .map(r => ({ week: r[0], period: r[1], actual: Number(r[3])||0, target: Number(r[4])||45 }));
 
-    // Team from Scorecard (rows 4-24)
+    // Team from Scorecard (rows 4-24) + CTC from P&L (rows 4-24)
     const teamRows = scorecard.getRange('A4:L24').getValues();
+    const pl = ss.getSheetByName('💰 P&L');
+    const plRows = pl ? pl.getRange('A4:G24').getValues() : [];
+    // Build CTC lookup from P&L: col A = name, col B = monthly CTC (₹), col C = annual CTC (₹)
+    const ctcMap = {};
+    plRows.forEach(r => { if (r[0]) ctcMap[String(r[0]).trim()] = (Number(r[2]) || 0) / 100000; }); // convert ₹ to ₹L
     const team = teamRows
       .filter(r => r[1] && typeof r[1] === 'string' && r[1].length > 1)
-      .map(r => ({ name: r[1], cluster: r[2], units: Number(r[5])||0, revenue: Number(r[6])||0, ctc: Number(r[10])||0, roi: Number(r[11])||0 }));
+      .map(r => ({ name: r[1], cluster: r[2], units: Number(r[5])||0, revenue: Number(r[6])||0, ctc: ctcMap[String(r[1]).trim()] || 0, roi: Number(r[11])||0 }));
 
     const result = {
       unitsAchieved: Number(row[2]) || 100,
