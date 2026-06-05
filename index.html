@@ -1456,7 +1456,10 @@ function renderBriefing(d) {
 // ──────────────────────────────────────────────────────────────
 // PORTFOLIO
 function renderPortfolio(d) {
-  const projs = d.projects || STATIC.projects;
+  // Always start from STATIC's full 16-project list, then overlay any live values
+  const liveMap = {};
+  (d.projects || []).forEach(p => { liveMap[p.name] = p; });
+  const projs = STATIC.projects.map(sp => liveMap[sp.name] ? { ...sp, ...liveMap[sp.name] } : sp);
 
   // Round all revenue values defensively (live data may be raw ₹ not Cr)
   const safe = projs.map(p => ({
@@ -1527,16 +1530,17 @@ function updateScenario(val) {
   const unitsNow   = Number((data || STATIC).unitsAchieved) || 100;
   const revNow     = Number((data || STATIC).revAchieved)   || 57.8;
   const avgRev     = unitsNow > 0 ? revNow / unitsNow : 0.578;
-  const projected  = unitsNow + v * 10;
+  const monthsLeft = 10;
+  const projected  = unitsNow + v * monthsLeft;
   const pct        = (projected / 2070 * 100).toFixed(1);
   const gap        = Math.max(0, 200 - v);
-  const estRev     = (projected * avgRev).toFixed(0);
+  const estRev     = (projected * avgRev).toFixed(1);
 
   document.getElementById('scnVal').textContent = v;
   document.getElementById('scnNum').textContent = projected.toLocaleString('en-IN');
   document.getElementById('scnSub').textContent = pct + '% of 2,070 target';
   document.getElementById('scnGap').textContent = gap > 0 ? gap + '/mo' : '0 — on track';
-  document.getElementById('scnRevForecast').textContent = '₹' + estRev + ' Cr';
+  document.getElementById('scnRevForecast').textContent = '₹' + Number(estRev).toLocaleString('en-IN') + ' Cr';
 
   const feasEl = document.getElementById('scnFeas');
   const numEl  = document.getElementById('scnNum');
@@ -1555,7 +1559,11 @@ function updateScenario(val) {
 // ──────────────────────────────────────────────────────────────
 // TEAM
 function renderTeam(d) {
-  const team = (d.team || STATIC.team).sort((a,b) => b.units - a.units);
+  // Always overlay live data on STATIC team so CTC values are never missing
+  const liveTeamMap = {};
+  (d.team || []).forEach(t => { liveTeamMap[t.name] = t; });
+  const team = STATIC.team.map(st => liveTeamMap[st.name] ? { ...st, ...liveTeamMap[st.name] } : st)
+    .sort((a,b) => b.units - a.units);
 
   document.getElementById('teamTableBody').innerHTML = team.map(t => {
     const statusPill = t.units === 0
