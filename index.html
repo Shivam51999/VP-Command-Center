@@ -1183,12 +1183,26 @@ async function fetchAllData() {
   }
 
   if (json && !json.error) {
+    // Merge live projects OVER full STATIC list — so all 16 always present
+    const liveProjectMap = {};
+    (json.projects || []).forEach(p => { liveProjectMap[p.name] = p; });
+    const mergedProjects = STATIC.projects.map(sp =>
+      liveProjectMap[sp.name] ? { ...sp, ...liveProjectMap[sp.name] } : sp
+    );
+
+    // Merge live team OVER STATIC team — so CTC values are never lost
+    const liveTeamMap = {};
+    (json.team || []).forEach(t => { liveTeamMap[t.name] = t; });
+    const mergedTeam = STATIC.team.map(st =>
+      liveTeamMap[st.name] ? { ...st, ...liveTeamMap[st.name] } : st
+    );
+
     data = {
       ...STATIC,
       ...json,
-      projects:    (json.projects    && json.projects.length)    ? json.projects    : STATIC.projects,
+      projects:    mergedProjects,
       weeks:       (json.weeks       && json.weeks.length)       ? json.weeks       : STATIC.weeks,
-      team:        (json.team        && json.team.length)        ? json.team        : STATIC.team,
+      team:        mergedTeam,
       recovery:    (json.recovery    && json.recovery.length)    ? json.recovery    : STATIC.recovery,
       leadSources: (json.leadSources && json.leadSources.length) ? json.leadSources : STATIC.leadSources,
       salesLog:    (json.salesLog    && json.salesLog.length)    ? json.salesLog    : STATIC.salesLog,
