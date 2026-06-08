@@ -1013,7 +1013,7 @@
 // ─── CONFIGURATION ───────────────────────────────────────────
 const CONFIG = {
   SHEET_ID: '1CDbbnFDMfJW2Bn3m4qwNtFCfJvlDDx0ztl6kXFvALV4',
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyD4NvXJbMb3jooE4KHpmzAbkvBiOJ6Ejz40SKz-E043blt_v31tzK5ggKllkorH4MQUg/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyVHCUxAPpAkgqFWaJMEuAnSvjwBzRkvQczo6p8yHs8uShlQpdSyvMQ5ns6jUJASe9d0g/exec',
 };
 
 // ─── STATIC DATA (used as fallback when offline) ──────────────
@@ -1153,13 +1153,37 @@ async function fetchAllData() {
 
   let json = null;
 
+  // Fetch from Apps Script — try direct fetch first, fall back to JSONP
   try {
-    const res = await fetch('/api/sheet', { cache: 'no-store' });
+    const res = await fetch(CONFIG.APPS_SCRIPT_URL + '?t=' + Date.now(), {
+      redirect: 'follow',
+      cache: 'no-store',
+    });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     json = await res.json();
-    console.log('Live data loaded:', json);
+    console.log('Live data loaded (fetch):', json);
   } catch (e1) {
-    console.warn('Proxy fetch failed:', e1.message);
+    // fetch failed (CORS or network) — try JSONP as fallback
+    try {
+      json = await new Promise((resolve, reject) => {
+        const cbName = '__gs_cb_' + Date.now();
+        const script = document.createElement('script');
+        const timer  = setTimeout(() => {
+          delete window[cbName]; script.remove(); reject(new Error('Timeout'));
+        }, 15000);
+        window[cbName] = (data) => {
+          clearTimeout(timer); delete window[cbName]; script.remove(); resolve(data);
+        };
+        script.onerror = () => {
+          clearTimeout(timer); delete window[cbName]; script.remove(); reject(new Error('Load failed'));
+        };
+        script.src = CONFIG.APPS_SCRIPT_URL + '?callback=' + cbName + '&t=' + Date.now();
+        document.head.appendChild(script);
+      });
+      console.log('Live data loaded (jsonp):', json);
+    } catch (e2) {
+      console.warn('Both fetch methods failed:', e2.message);
+    }
   }
 
   // ── Debug panel (remove after live data confirmed working) ──
@@ -1194,8 +1218,7 @@ async function fetchAllData() {
     const mergedTeam = STATIC.team.map(st => {
       const live = liveTeamMap[st.name];
       if (!live) return st;
-      // Always preserve STATIC ctc — relay reads wrong column (Rev/₹1 CTC not annual CTC ₹L)
-      return { ...st, units: live.units ?? st.units, revenue: live.revenue || st.revenue, roi: live.roi || st.roi };
+      return { ...st, units: live.units ?? st.units, revenue: live.revenue || st.revenue, ctc: live.ctc || st.ctc, roi: live.roi || st.roi };
     });
 
     data = {
@@ -1297,8 +1320,19 @@ function renderCharts(d) {
   const projs = d.projects || STATIC.projects;
   const selling = projs.filter(p => p.revAch > 0);
 
-  // Destroy old charts
-  Object.values(charts).forEach(c => c && c.destroy());
+  // Destroy old charts and fully release canvas contexts
+  Object.entries(charts).forEach(([key, c]) => {
+    if (c) {
+      c.destroy();
+      // Get the canvas and reset it to release the context fully
+      const canvas = c.canvas;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      charts[key] = null;
+    }
+  });
 
   const chartDefaults = {
     responsive: true,
