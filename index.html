@@ -1153,37 +1153,26 @@ async function fetchAllData() {
 
   let json = null;
 
-  // Fetch from Apps Script — try direct fetch first, fall back to JSONP
+  // Fetch from Apps Script via JSONP
   try {
-    const res = await fetch(CONFIG.APPS_SCRIPT_URL + '?t=' + Date.now(), {
-      redirect: 'follow',
-      cache: 'no-store',
+    json = await new Promise((resolve, reject) => {
+      const cbName = '__gs_cb_' + Date.now();
+      const script = document.createElement('script');
+      const timer  = setTimeout(() => {
+        delete window[cbName]; script.remove(); reject(new Error('Timeout'));
+      }, 20000);
+      window[cbName] = (data) => {
+        clearTimeout(timer); delete window[cbName]; script.remove(); resolve(data);
+      };
+      script.onerror = () => {
+        clearTimeout(timer); delete window[cbName]; script.remove(); reject(new Error('Load failed'));
+      };
+      script.src = CONFIG.APPS_SCRIPT_URL + '?callback=' + cbName + '&t=' + Date.now();
+      document.head.appendChild(script);
     });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    json = await res.json();
-    console.log('Live data loaded (fetch):', json);
+    console.log('Live data loaded:', json);
   } catch (e1) {
-    // fetch failed (CORS or network) — try JSONP as fallback
-    try {
-      json = await new Promise((resolve, reject) => {
-        const cbName = '__gs_cb_' + Date.now();
-        const script = document.createElement('script');
-        const timer  = setTimeout(() => {
-          delete window[cbName]; script.remove(); reject(new Error('Timeout'));
-        }, 15000);
-        window[cbName] = (data) => {
-          clearTimeout(timer); delete window[cbName]; script.remove(); resolve(data);
-        };
-        script.onerror = () => {
-          clearTimeout(timer); delete window[cbName]; script.remove(); reject(new Error('Load failed'));
-        };
-        script.src = CONFIG.APPS_SCRIPT_URL + '?callback=' + cbName + '&t=' + Date.now();
-        document.head.appendChild(script);
-      });
-      console.log('Live data loaded (jsonp):', json);
-    } catch (e2) {
-      console.warn('Both fetch methods failed:', e2.message);
-    }
+    console.log('JSONP fetch failed:', e1.message);
   }
 
   // ── Debug panel (remove after live data confirmed working) ──
@@ -1320,18 +1309,14 @@ function renderCharts(d) {
   const projs = d.projects || STATIC.projects;
   const selling = projs.filter(p => p.revAch > 0);
 
-  // Destroy old charts and fully release canvas contexts
+  // Destroy old charts — use Chart.getChart() to catch any orphaned instances
   Object.entries(charts).forEach(([key, c]) => {
-    if (c) {
-      c.destroy();
-      // Get the canvas and reset it to release the context fully
-      const canvas = c.canvas;
-      if (canvas) {
-        const ctx = canvas.getContext('2d');
-        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-      charts[key] = null;
-    }
+    if (c) { c.destroy(); charts[key] = null; }
+  });
+  // Also destroy any orphaned chart instances on canvases
+  document.querySelectorAll('canvas').forEach(canvas => {
+    const existing = Chart.getChart(canvas);
+    if (existing) existing.destroy();
   });
 
   const chartDefaults = {
