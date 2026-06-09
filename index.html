@@ -614,10 +614,7 @@
   <!-- ══════════════════════════════════
        PAGE: OVERVIEW
   ══════════════════════════════════════ -->
-  <div id="debugPanel" style="display:none;position:fixed;bottom:16px;right:16px;z-index:9999;
-  background:#fff;border:1px solid #ccc;border-radius:8px;padding:14px 18px;
-  font-size:11px;font-family:monospace;max-width:320px;box-shadow:0 4px 20px rgba(0,0,0,0.15);
-  line-height:1.7;">Checking…</div>
+
 <div class="page active" id="page-overview">
 
     <div class="section-header" style="margin-bottom:16px;">
@@ -1176,22 +1173,7 @@ async function fetchAllData() {
   }
 
   // ── Debug panel (remove after live data confirmed working) ──
-  const dbg = document.getElementById('debugPanel');
-  if (dbg) {
-    if (json) {
-      dbg.innerHTML = '<b style="color:green">✅ Script reached. Raw values:</b><br>' +
-        'unitsAchieved: ' + json.unitsAchieved + '<br>' +
-        'revAchieved: '   + json.revAchieved   + '<br>' +
-        'zeroSaleBurn: '  + json.zeroSaleBurn  + '<br>' +
-        'projects count: '+ (json.projects ? json.projects.length : 'null') + '<br>' +
-        'team count: '    + (json.team     ? json.team.length     : 'null') + '<br>' +
-        'weeks count: '   + (json.weeks    ? json.weeks.length    : 'null') + '<br>' +
-        'error: '         + (json.error    || 'none');
-    } else {
-      dbg.innerHTML = '<b style="color:red">❌ Script unreachable — using static data</b>';
-    }
-    dbg.style.display = 'block';
-  }
+
 
   if (json && !json.error) {
     // Merge live projects OVER full STATIC list — so all 16 always present
@@ -1283,7 +1265,7 @@ function renderKPIs(d) {
 
   // Weekly run rate from weeks data
   const weeksData = (d.weeks || STATIC.weeks).filter(w =>
-    w.week && String(w.week).match(/Wk|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i) &&
+    w.week && String(w.week).match(/^Wk/i) &&
     Number(w.actual) < 500
   );
   const weeklyRunRate = weeksData.length
@@ -1649,7 +1631,7 @@ function renderPace(d) {
   // rows (Annual Target=2070 etc.) fall back to STATIC.
   const rawWeeks = d.weeks || [];
   const validWeeks = rawWeeks.filter(w =>
-    w.week && String(w.week).match(/Wk|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i) &&
+    w.week && String(w.week).match(/^Wk/i) &&
     Number(w.actual) < 500 && Number(w.target) < 500
   );
   const weeks = validWeeks.length >= 2 ? validWeeks : STATIC.weeks;
@@ -1831,7 +1813,7 @@ function doGet(e) {
     // Weekly rows from Pacer (rows 14-21)
     const weekRows = pacer.getRange('A14:I21').getValues();
     const weeks = weekRows
-      .filter(r => r[0] && String(r[0]).match(/Wk/i))
+      .filter(r => r[0] && String(r[0]).toString().trim().match(/^Wk/i))
       .map(r => ({ week: r[0], period: r[1], actual: Number(r[3])||0, target: Number(r[4])||45 }));
 
     // Team from Scorecard (rows 4-24) + CTC from P&L (rows 4-24)
