@@ -1313,11 +1313,7 @@ function renderCharts(d) {
   Object.entries(charts).forEach(([key, c]) => {
     if (c) { c.destroy(); charts[key] = null; }
   });
-  // Also destroy any orphaned chart instances on canvases
-  document.querySelectorAll('canvas').forEach(canvas => {
-    const existing = Chart.getChart(canvas);
-    if (existing) existing.destroy();
-  });
+  // Individual charts destroy themselves before recreation (see below)
 
   const chartDefaults = {
     responsive: true,
@@ -1340,7 +1336,9 @@ function renderCharts(d) {
   };
 
   // Revenue chart
-  charts.rev = new Chart(document.getElementById('revChart'), {
+  const revEl = document.getElementById('revChart'); if (!revEl) return;
+  Chart.getChart(revEl) && Chart.getChart(revEl).destroy();
+  charts.rev = new Chart(revEl, {
     type: 'bar',
     data: {
       labels: selling.map(p => p.name),
@@ -1353,7 +1351,9 @@ function renderCharts(d) {
   });
 
   // Units chart
-  charts.unit = new Chart(document.getElementById('unitChart'), {
+  const unitEl = document.getElementById('unitChart'); if (!unitEl) return;
+  Chart.getChart(unitEl) && Chart.getChart(unitEl).destroy();
+  charts.unit = new Chart(unitEl, {
     type: 'bar',
     data: {
       labels: selling.map(p => p.name),
@@ -1367,7 +1367,9 @@ function renderCharts(d) {
 
   // Weekly trend
   const weeks = d.weeks || STATIC.weeks;
-  charts.weekly = new Chart(document.getElementById('weeklyChart'), {
+  const weeklyEl = document.getElementById('weeklyChart'); if (!weeklyEl) return;
+  Chart.getChart(weeklyEl) && Chart.getChart(weeklyEl).destroy();
+  charts.weekly = new Chart(weeklyEl, {
     type: 'line',
     data: {
       labels: weeks.map(w => w.week),
@@ -1381,7 +1383,9 @@ function renderCharts(d) {
 
   // Lead chart
   const ls = d.leadSources || STATIC.leadSources;
-  charts.lead = new Chart(document.getElementById('leadChart'), {
+  const leadEl = document.getElementById('leadChart'); if (!leadEl) return;
+  Chart.getChart(leadEl) && Chart.getChart(leadEl).destroy();
+  charts.lead = new Chart(leadEl, {
     type: 'doughnut',
     data: {
       labels: ls.map(l => l.source),
@@ -1404,7 +1408,9 @@ function renderCharts(d) {
 
   // ROI chart
   const activeTeam = (d.team || STATIC.team).filter(t => t.units > 0).sort((a,b) => b.roi - a.roi);
-  charts.roi = new Chart(document.getElementById('roiChart'), {
+  const roiEl = document.getElementById('roiChart'); if (!roiEl) return;
+  Chart.getChart(roiEl) && Chart.getChart(roiEl).destroy();
+  charts.roi = new Chart(roiEl, {
     type: 'bar',
     data: {
       labels: activeTeam.map(t => t.name.split(' ')[0]),
@@ -1414,7 +1420,9 @@ function renderCharts(d) {
   });
 
   // Pace chart
-  charts.pace = new Chart(document.getElementById('paceChart'), {
+  const paceEl = document.getElementById('paceChart'); if (!paceEl) return;
+  Chart.getChart(paceEl) && Chart.getChart(paceEl).destroy();
+  charts.pace = new Chart(paceEl, {
     type: 'bar',
     data: {
       labels: weeks.map(w => w.week),
@@ -1430,7 +1438,9 @@ function renderCharts(d) {
   const bspSource = (d.bsp && d.bsp.length)
     ? d.bsp.filter(b => b.avgBsp > 0).map(b => ({ name: b.project, bsp: b.avgBsp }))
     : projs.filter(p => p.bsp > 0).map(p => ({ name: p.name, bsp: p.bsp }));
-  charts.bsp = new Chart(document.getElementById('bspChart'), {
+  const bspEl = document.getElementById('bspChart'); if (!bspEl) return;
+  Chart.getChart(bspEl) && Chart.getChart(bspEl).destroy();
+  charts.bsp = new Chart(bspEl, {
     type: 'bar',
     data: {
       labels: bspSource.map(p => p.name),
