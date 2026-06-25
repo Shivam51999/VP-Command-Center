@@ -669,8 +669,8 @@
       <div class="card">
         <div class="card-title">Revenue Achieved vs Target (₹ Cr)</div>
         <div class="chart-legend">
-          <div class="legend-item"><div class="legend-dot" style="background:#4a90d4;"></div>Achieved</div>
           <div class="legend-item"><div class="legend-dot" style="background:#dcdce0;"></div>Target</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#4a90d4;"></div>Achieved</div>
         </div>
         <div class="chart-wrap" style="height:200px;">
           <canvas id="revChart" role="img" aria-label="Revenue achieved vs target by project"></canvas>
@@ -680,8 +680,8 @@
       <div class="card">
         <div class="card-title">Units Sold vs Target — Top Projects</div>
         <div class="chart-legend">
-          <div class="legend-item"><div class="legend-dot" style="background:#4ea86b;"></div>Sold</div>
           <div class="legend-item"><div class="legend-dot" style="background:#dcdce0;"></div>Target</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#4ea86b;"></div>Sold</div>
         </div>
         <div class="chart-wrap" style="height:200px;">
           <canvas id="unitChart" role="img" aria-label="Units sold vs target by project"></canvas>
@@ -1325,8 +1325,8 @@ function renderCharts(d) {
     data: {
       labels: selling.map(p => p.name),
       datasets: [
-        { label: 'Achieved', data: selling.map(p => p.revAch), backgroundColor: '#4a90d4', borderRadius: 3 },
         { label: 'Target',   data: selling.map(p => p.revTarget), backgroundColor: '#dcdce0', borderRadius: 3 },
+        { label: 'Achieved', data: selling.map(p => p.revAch), backgroundColor: '#4a90d4', borderRadius: 3 },
       ]
     },
     options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, legend: { display: false } } }
@@ -1340,8 +1340,8 @@ function renderCharts(d) {
     data: {
       labels: selling.map(p => p.name),
       datasets: [
-        { label: 'Sold',   data: selling.map(p => p.uSold),   backgroundColor: '#4ea86b', borderRadius: 3 },
         { label: 'Target', data: selling.map(p => p.uTarget), backgroundColor: '#dcdce0', borderRadius: 3 },
+        { label: 'Sold',   data: selling.map(p => p.uSold),   backgroundColor: '#4ea86b', borderRadius: 3 },
       ]
     },
     options: { ...chartDefaults }
