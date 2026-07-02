@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
   :root {
     /* Mangalam Brand Palette — Light Theme */
@@ -785,6 +785,11 @@
       <div class="card-title">BSP Benchmark — ₹/sqft by Project</div>
       <div id="bspTable"></div>
     </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">Booking Source Mix — By Project</div>
+      <div class="matrix-grid" id="projectSourceGrid" style="grid-template-columns: repeat(4, 1fr);"></div>
+    </div>
   </div>
 
   <!-- ══════════════════════════════════
@@ -1010,6 +1015,10 @@
 <script>
 // ─── CONFIGURATION ───────────────────────────────────────────
 const CONFIG = {
+  SHEET_ID: '1CDbbnFDMfJW2Bn3m4qwNtFCfJvlDDx0ztl6kXFvALV4',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxuKm9DF9dZ_AedAAlqlJW6i6pjdGdRXpli2uEbl8MsxrGv5-U5IwnMEUsodhok85HRQA/exec',
+};
+
 // Fixed name → color map so every lead source always gets the same,
 // distinct color everywhere it appears — "Other" no longer inherits
 // Channel Partners' blue just because it falls off the end of an array.
@@ -1023,9 +1032,9 @@ const SOURCE_COLORS = {
 function colorForSource(name) {
   return SOURCE_COLORS[name] || '#8a8f98'; // grey fallback for any future new source
 }
-  SHEET_ID: '1CDbbnFDMfJW2Bn3m4qwNtFCfJvlDDx0ztl6kXFvALV4',
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxuKm9DF9dZ_AedAAlqlJW6i6pjdGdRXpli2uEbl8MsxrGv5-U5IwnMEUsodhok85HRQA/exec',
-};
+function sanitizeId(name) {
+  return String(name).replace(/[^a-zA-Z0-9]/g, '_');
+}
 
 // ─── STATIC DATA (used as fallback when offline) ──────────────
 const STATIC = {
@@ -1214,6 +1223,7 @@ async function fetchAllData() {
       team:        mergedTeam,
       recovery:    (json.recovery    && json.recovery.length)    ? json.recovery    : STATIC.recovery,
       leadSources: (json.leadSources && json.leadSources.length) ? json.leadSources : STATIC.leadSources,
+      leadSourceByProject: json.leadSourceByProject || null,
       salesLog:    (json.salesLog    && json.salesLog.length)    ? json.salesLog    : STATIC.salesLog,
     };
     renderAll(data);
@@ -1391,7 +1401,7 @@ function renderCharts(d) {
       labels: ls.map(l => l.source),
       datasets: [{ data: ls.map(l => l.bookings), backgroundColor: leadColors, borderColor: '#ffffff', borderWidth: 2, hoverOffset: 4 }]
     },
-    plugins: [ChartDataLabels],
+    plugins: (typeof ChartDataLabels !== 'undefined') ? [ChartDataLabels] : [],
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
@@ -1403,7 +1413,7 @@ function renderCharts(d) {
           formatter: (value, ctx) => {
             const total = ctx.chart.data.datasets[0].data.reduce((a,b) => a+b, 0);
             const pct = total > 0 ? Math.round(value / total * 100) : 0;
-            return pct >= 5 ? pct + '%' : ''; // hide labels on slivers to avoid clutter
+            return pct >= 5 ? pct + '%' : '';
           }
         }
       }
@@ -1417,6 +1427,7 @@ function renderCharts(d) {
       <span>${l.source} (${l.bookings})</span>
     </div>`
   ).join('');
+
   // ROI chart
   const activeTeam = (d.team || STATIC.team).filter(t => t.units > 0).sort((a,b) => b.roi - a.roi);
   const roiEl = document.getElementById('roiChart'); if (!roiEl) return;
@@ -1511,100 +1522,6 @@ function renderBriefing(d) {
 // ──────────────────────────────────────────────────────────────
 // PORTFOLIO
 function renderPortfolio(d) {
-  // ──────────────────────────────────────────────────────────────
-// PROJECT-LEVEL LEAD SOURCE MIX (Portfolio tab)
-function renderProjectSourceCharts(d) {
-  const grid = document.getElementById('projectSourceGrid');
-  if (!grid) return;
-
-  // Prefer the live per-project breakdown from the relay (v12+).
-  // Falls back to aggregating the visible salesLog if the relay
-  // hasn't been updated yet — less accurate (only last ~15 rows)
-  // but keeps the section from being empty.
-  let byProject = d.leadSourceByProject;
-  if (!byProject) {
-    byProject = {};
-    (d.salesLog || STATIC.salesLog).forEach(s => {
-      if (s.status && s.status !== 'Booked') return;
-      if (!byProject[s.project]) byProject[s.project] = {};
-      byProject[s.project][s.src] = (byProject[s.project][s.src] || 0) + 1;
-    });
-    byProject = Object.fromEntries(
-      Object.entries(byProject).map(([proj, srcMap]) =>
-        [proj, Object.entries(srcMap).map(([source, bookings]) => ({ source, bookings }))]
-      )
-    );
-  }
-
-  // Destroy any previously rendered mini-charts before re-rendering
-  Object.keys(charts).filter(k => k.startsWith('projSrc_')).forEach(k => {
-    if (charts[k]) charts[k].destroy();
-    delete charts[k];
-  });
-
-  const projectNames = Object.keys(byProject).filter(p => {
-    const total = byProject[p].reduce((s, x) => s + x.bookings, 0);
-    return total > 0;
-  });
-
-  if (projectNames.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;font-size:12px;color:var(--text3);padding:12px;">No booking source data yet.</div>`;
-    return;
-  }
-
-  grid.innerHTML = projectNames.map(p =>
-    `<div class="matrix-cell zero" style="text-align:center;">
-      <div class="mc-name" style="color:var(--text2);margin-bottom:6px;">${p}</div>
-      <div style="height:110px;"><canvas id="projSrcChart_${sanitizeId(p)}"></canvas></div>
-    </div>`
-  ).join('');
-
-  projectNames.forEach(p => {
-    const sources = byProject[p];
-    const canvasId = 'projSrcChart_' + sanitizeId(p);
-    const el = document.getElementById(canvasId);
-    if (!el) return;
-    const key = 'projSrc_' + sanitizeId(p);
-    charts[key] = new Chart(el, {
-      type: 'pie',
-      data: {
-        labels: sources.map(s => s.source),
-        datasets: [{
-          data: sources.map(s => s.bookings),
-          backgroundColor: sources.map(s => colorForSource(s.source)),
-          borderColor: '#ffffff',
-          borderWidth: 1.5,
-        }]
-      },
-      plugins: [ChartDataLabels],
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#ffffff', borderColor: '#e0e0e4', borderWidth: 1,
-            titleColor: '#1a1a1f', bodyColor: '#5a5760',
-            callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}` }
-          },
-          datalabels: {
-            color: '#ffffff',
-            font: { size: 9, weight: '700', family: "'DM Sans', sans-serif" },
-            formatter: (value, ctx) => {
-              const total = ctx.chart.data.datasets[0].data.reduce((a,b) => a+b, 0);
-              const pct = total > 0 ? Math.round(value / total * 100) : 0;
-              return pct >= 12 ? pct + '%' : ''; // small charts — hide tiny slivers more aggressively
-            }
-          }
-        }
-      }
-    });
-  });
-}
-
-function sanitizeId(name) {
-  return String(name).replace(/[^a-zA-Z0-9]/g, '_');
-  renderProjectSourceCharts(d);
-}
   // Always start from STATIC's full 16-project list, then overlay any live values
   const liveMap = {};
   (d.projects || []).forEach(p => { liveMap[p.name] = p; });
@@ -1670,6 +1587,97 @@ function sanitizeId(name) {
         </tbody>
       </table>`;
   }
+
+  renderProjectSourceCharts(d);
+}
+
+// ──────────────────────────────────────────────────────────────
+// PROJECT-LEVEL LEAD SOURCE MIX (Portfolio tab)
+function renderProjectSourceCharts(d) {
+  const grid = document.getElementById('projectSourceGrid');
+  if (!grid) return;
+
+  // Prefer the live per-project breakdown from the relay (v12+).
+  // Falls back to aggregating the visible salesLog if the relay
+  // hasn't been updated yet — less accurate (only last ~15 rows)
+  // but keeps the section from being empty.
+  let byProject = d.leadSourceByProject;
+  if (!byProject) {
+    const tmp = {};
+    (d.salesLog || STATIC.salesLog).forEach(s => {
+      if (s.status && s.status !== 'Booked') return;
+      if (!tmp[s.project]) tmp[s.project] = {};
+      tmp[s.project][s.src] = (tmp[s.project][s.src] || 0) + 1;
+    });
+    byProject = {};
+    Object.keys(tmp).forEach(proj => {
+      byProject[proj] = Object.keys(tmp[proj]).map(source => ({ source, bookings: tmp[proj][source] }));
+    });
+  }
+
+  // Destroy any previously rendered mini-charts before re-rendering
+  Object.keys(charts).filter(k => k.startsWith('projSrc_')).forEach(k => {
+    if (charts[k]) charts[k].destroy();
+    delete charts[k];
+  });
+
+  const projectNames = Object.keys(byProject).filter(p => {
+    const total = byProject[p].reduce((s, x) => s + x.bookings, 0);
+    return total > 0;
+  });
+
+  if (projectNames.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;font-size:12px;color:var(--text3);padding:12px;">No booking source data yet.</div>`;
+    return;
+  }
+
+  grid.innerHTML = projectNames.map(p =>
+    `<div class="matrix-cell zero" style="text-align:center;">
+      <div class="mc-name" style="color:var(--text2);margin-bottom:6px;">${p}</div>
+      <div style="height:110px;"><canvas id="projSrcChart_${sanitizeId(p)}"></canvas></div>
+    </div>`
+  ).join('');
+
+  projectNames.forEach(p => {
+    const sources = byProject[p];
+    const canvasId = 'projSrcChart_' + sanitizeId(p);
+    const el = document.getElementById(canvasId);
+    if (!el) return;
+    const key = 'projSrc_' + sanitizeId(p);
+    charts[key] = new Chart(el, {
+      type: 'pie',
+      data: {
+        labels: sources.map(s => s.source),
+        datasets: [{
+          data: sources.map(s => s.bookings),
+          backgroundColor: sources.map(s => colorForSource(s.source)),
+          borderColor: '#ffffff',
+          borderWidth: 1.5,
+        }]
+      },
+      plugins: (typeof ChartDataLabels !== 'undefined') ? [ChartDataLabels] : [],
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#ffffff', borderColor: '#e0e0e4', borderWidth: 1,
+            titleColor: '#1a1a1f', bodyColor: '#5a5760',
+            callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}` }
+          },
+          datalabels: {
+            color: '#ffffff',
+            font: { size: 9, weight: '700', family: "'DM Sans', sans-serif" },
+            formatter: (value, ctx) => {
+              const total = ctx.chart.data.datasets[0].data.reduce((a,b) => a+b, 0);
+              const pct = total > 0 ? Math.round(value / total * 100) : 0;
+              return pct >= 12 ? pct + '%' : '';
+            }
+          }
+        }
+      }
+    });
+  });
 }
 
 function updateScenario(val) {
@@ -1851,7 +1859,7 @@ function renderRecovery(d) {
 function renderLeads(d) {
   const ls = d.leadSources || STATIC.leadSources;
   const maxBook = Math.max(...ls.map(l => l.bookings));
-  const colors = ['#4a90d4','#4ea86b','#c9a84c','#d4843a'];
+  const colors = ls.map(l => colorForSource(l.source));
 
   document.getElementById('leadSourceBars').innerHTML = ls.map((l,i) => {
     const w = (l.bookings / maxBook * 100).toFixed(1);
@@ -1911,91 +1919,6 @@ window.addEventListener('DOMContentLoaded', () => {
   }, 800);
 });
 </script>
-
-<!-- ══════════════════════════════════
-     README — HOW TO CONNECT YOUR SHEET
-══════════════════════════════════════
-
-STEP 1: Open your VP Master Dashboard Google Sheet
-
-STEP 2: Go to Extensions > Apps Script
-
-STEP 3: Paste this relay script and deploy as Web App:
-
-```
-function doGet(e) {
-  try {
-    const ss = SpreadsheetApp.openById('1CDbbnFDMfJW2Bn3m4qwNtFCfJvlDDx0ztl6kXFvALV4');
-    const ov        = ss.getSheetByName('📊 Overview');
-    const pacer     = ss.getSheetByName('📅 Weekly Pacer');
-    const scorecard = ss.getSheetByName('👥 Team Scorecard');
-
-    // KPIs from Overview row 10
-    const row = ov.getRange('A10:O10').getValues()[0];
-
-    // Weekly rows from Pacer (rows 14-21)
-    const weekRows = pacer.getRange('A14:I21').getValues();
-    const weeks = weekRows
-      .filter(r => r[0] && String(r[0]).toString().trim().match(/^Wk/i))
-      .map(r => ({ week: r[0], period: r[1], actual: Number(r[3])||0, target: Number(r[4])||45 }));
-
-    // Team from Scorecard (rows 4-24) + CTC from P&L (rows 4-24)
-    const teamRows = scorecard.getRange('A4:L24').getValues();
-    const pl = ss.getSheetByName('💰 P&L');
-    const plRows = pl ? pl.getRange('A4:G24').getValues() : [];
-    // Build CTC lookup from P&L: col A = name, col B = monthly CTC (₹), col C = annual CTC (₹)
-    const ctcMap = {};
-    plRows.forEach(r => { if (r[0]) ctcMap[String(r[0]).trim()] = (Number(r[2]) || 0) / 100000; }); // convert ₹ to ₹L
-    const team = teamRows
-      .filter(r => r[1] && typeof r[1] === 'string' && r[1].length > 1)
-      .map(r => ({ name: r[1], cluster: r[2], units: Number(r[5])||0, revenue: Number(r[6])||0, ctc: ctcMap[String(r[1]).trim()] || 0, roi: Number(r[11])||0 }));
-
-    // BSP min/avg/max from Cost Analytics (rows 4-19, cols A=Project, B=Avg BSP, C=Min BSP, D=Max BSP)
-    const costSheet = ss.getSheetByName('⚙️ Cost Analytics');
-    const bspRows = costSheet ? costSheet.getRange('A4:D19').getValues() : [];
-    const projects = bspRows
-      .filter(r => r[0] && typeof r[0] === 'string' && r[0].length > 1 && Number(r[1]) > 0)
-      .map(r => ({ name: String(r[0]).trim(), bsp: Number(r[1])||0, minBSP: Number(r[2])||0, maxBSP: Number(r[3])||0 }));
-
-    const result = {
-      unitsAchieved: Number(row[2]) || 100,
-      revAchieved:   Number(row[10]) || 57.8,
-      convRate:      98.0,
-      zeroSaleBurn:  29.14,
-      weeks:    weeks.length    >= 2 ? weeks    : null,
-      team:     team.length     >= 5 ? team     : null,
-      projects: projects.length >= 3 ? projects : null,
-    };
-
-    // JSONP support — if browser passes ?callback=xxx, wrap response
-    const cb = e && e.parameter && e.parameter.callback;
-    const body = JSON.stringify(result);
-    const out  = cb ? cb + '(' + body + ')' : body;
-
-    return ContentService
-      .createTextOutput(out)
-      .setMimeType(cb ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
-
-  } catch(err) {
-    const cb = e && e.parameter && e.parameter.callback;
-    const body = JSON.stringify({ error: err.message });
-    return ContentService
-      .createTextOutput(cb ? cb + '(' + body + ')' : body)
-      .setMimeType(ContentService.MimeType.JAVASCRIPT);
-  }
-}
-```
-
-STEP 4: Deploy > New Deployment > Web App
-  - Execute as: Me
-  - Who has access: Anyone
-  - Copy the Web App URL
-
-STEP 5: Paste the URL into CONFIG.APPS_SCRIPT_URL at the top of this file
-
-STEP 6: Deploy on Vercel / Netlify / GitHub Pages — it's a single HTML file, no build step needed.
-
-════════════════════════════════════ -->
 
 </body>
 </html>
