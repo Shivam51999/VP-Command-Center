@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
   :root {
     /* Mangalam Brand Palette — Light Theme */
@@ -1009,6 +1010,19 @@
 <script>
 // ─── CONFIGURATION ───────────────────────────────────────────
 const CONFIG = {
+// Fixed name → color map so every lead source always gets the same,
+// distinct color everywhere it appears — "Other" no longer inherits
+// Channel Partners' blue just because it falls off the end of an array.
+const SOURCE_COLORS = {
+  'Channel Partners': '#4a90d4',
+  'Walk-in':           '#4ea86b',
+  'Referral':          '#c9a84c',
+  'Digital':           '#d4843a',
+  'Other':             '#9b59b6',
+};
+function colorForSource(name) {
+  return SOURCE_COLORS[name] || '#8a8f98'; // grey fallback for any future new source
+}
   SHEET_ID: '1CDbbnFDMfJW2Bn3m4qwNtFCfJvlDDx0ztl6kXFvALV4',
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxuKm9DF9dZ_AedAAlqlJW6i6pjdGdRXpli2uEbl8MsxrGv5-U5IwnMEUsodhok85HRQA/exec',
 };
@@ -1363,31 +1377,46 @@ function renderCharts(d) {
     options: { ...chartDefaults }
   });
 
-  // Lead chart
+  // Lead chart — fixed color map (name-based, not index-based) so
+  // "Other" always gets its own color instead of inheriting whatever
+  // the array happened to leave undefined. Filled pie (no cutout) with
+  // % labels drawn directly on each slice.
   const ls = d.leadSources || STATIC.leadSources;
   const leadEl = document.getElementById('leadChart'); if (!leadEl) return;
   Chart.getChart(leadEl) && Chart.getChart(leadEl).destroy();
+  const leadColors = ls.map(l => colorForSource(l.source));
   charts.lead = new Chart(leadEl, {
-    type: 'doughnut',
+    type: 'pie',
     data: {
       labels: ls.map(l => l.source),
-      datasets: [{ data: ls.map(l => l.bookings), backgroundColor: ['#4a90d4','#4ea86b','#c9a84c','#d4843a'], borderWidth: 0, hoverOffset: 4 }]
+      datasets: [{ data: ls.map(l => l.bookings), backgroundColor: leadColors, borderColor: '#ffffff', borderWidth: 2, hoverOffset: 4 }]
     },
+    plugins: [ChartDataLabels],
     options: {
-      responsive: true, maintainAspectRatio: false, cutout: '68%',
-      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#ffffff', borderColor: '#e0e0e4', borderWidth: 1, titleColor: '#1a1a1f', bodyColor: '#5a5760' } }
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: '#ffffff', borderColor: '#e0e0e4', borderWidth: 1, titleColor: '#1a1a1f', bodyColor: '#5a5760' },
+        datalabels: {
+          color: '#ffffff',
+          font: { size: 11, weight: '700', family: "'DM Sans', sans-serif" },
+          formatter: (value, ctx) => {
+            const total = ctx.chart.data.datasets[0].data.reduce((a,b) => a+b, 0);
+            const pct = total > 0 ? Math.round(value / total * 100) : 0;
+            return pct >= 5 ? pct + '%' : ''; // hide labels on slivers to avoid clutter
+          }
+        }
+      }
     }
   });
 
   // Lead legend
-  const colors = ['#4a90d4','#4ea86b','#c9a84c','#d4843a'];
   document.getElementById('leadLegend').innerHTML = ls.map((l,i) =>
     `<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);margin-bottom:5px;">
-      <div style="width:8px;height:8px;border-radius:2px;background:${colors[i]};flex-shrink:0;"></div>
+      <div style="width:8px;height:8px;border-radius:2px;background:${leadColors[i]};flex-shrink:0;"></div>
       <span>${l.source} (${l.bookings})</span>
     </div>`
   ).join('');
-
   // ROI chart
   const activeTeam = (d.team || STATIC.team).filter(t => t.units > 0).sort((a,b) => b.roi - a.roi);
   const roiEl = document.getElementById('roiChart'); if (!roiEl) return;
@@ -1482,6 +1511,100 @@ function renderBriefing(d) {
 // ──────────────────────────────────────────────────────────────
 // PORTFOLIO
 function renderPortfolio(d) {
+  // ──────────────────────────────────────────────────────────────
+// PROJECT-LEVEL LEAD SOURCE MIX (Portfolio tab)
+function renderProjectSourceCharts(d) {
+  const grid = document.getElementById('projectSourceGrid');
+  if (!grid) return;
+
+  // Prefer the live per-project breakdown from the relay (v12+).
+  // Falls back to aggregating the visible salesLog if the relay
+  // hasn't been updated yet — less accurate (only last ~15 rows)
+  // but keeps the section from being empty.
+  let byProject = d.leadSourceByProject;
+  if (!byProject) {
+    byProject = {};
+    (d.salesLog || STATIC.salesLog).forEach(s => {
+      if (s.status && s.status !== 'Booked') return;
+      if (!byProject[s.project]) byProject[s.project] = {};
+      byProject[s.project][s.src] = (byProject[s.project][s.src] || 0) + 1;
+    });
+    byProject = Object.fromEntries(
+      Object.entries(byProject).map(([proj, srcMap]) =>
+        [proj, Object.entries(srcMap).map(([source, bookings]) => ({ source, bookings }))]
+      )
+    );
+  }
+
+  // Destroy any previously rendered mini-charts before re-rendering
+  Object.keys(charts).filter(k => k.startsWith('projSrc_')).forEach(k => {
+    if (charts[k]) charts[k].destroy();
+    delete charts[k];
+  });
+
+  const projectNames = Object.keys(byProject).filter(p => {
+    const total = byProject[p].reduce((s, x) => s + x.bookings, 0);
+    return total > 0;
+  });
+
+  if (projectNames.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;font-size:12px;color:var(--text3);padding:12px;">No booking source data yet.</div>`;
+    return;
+  }
+
+  grid.innerHTML = projectNames.map(p =>
+    `<div class="matrix-cell zero" style="text-align:center;">
+      <div class="mc-name" style="color:var(--text2);margin-bottom:6px;">${p}</div>
+      <div style="height:110px;"><canvas id="projSrcChart_${sanitizeId(p)}"></canvas></div>
+    </div>`
+  ).join('');
+
+  projectNames.forEach(p => {
+    const sources = byProject[p];
+    const canvasId = 'projSrcChart_' + sanitizeId(p);
+    const el = document.getElementById(canvasId);
+    if (!el) return;
+    const key = 'projSrc_' + sanitizeId(p);
+    charts[key] = new Chart(el, {
+      type: 'pie',
+      data: {
+        labels: sources.map(s => s.source),
+        datasets: [{
+          data: sources.map(s => s.bookings),
+          backgroundColor: sources.map(s => colorForSource(s.source)),
+          borderColor: '#ffffff',
+          borderWidth: 1.5,
+        }]
+      },
+      plugins: [ChartDataLabels],
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#ffffff', borderColor: '#e0e0e4', borderWidth: 1,
+            titleColor: '#1a1a1f', bodyColor: '#5a5760',
+            callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}` }
+          },
+          datalabels: {
+            color: '#ffffff',
+            font: { size: 9, weight: '700', family: "'DM Sans', sans-serif" },
+            formatter: (value, ctx) => {
+              const total = ctx.chart.data.datasets[0].data.reduce((a,b) => a+b, 0);
+              const pct = total > 0 ? Math.round(value / total * 100) : 0;
+              return pct >= 12 ? pct + '%' : ''; // small charts — hide tiny slivers more aggressively
+            }
+          }
+        }
+      }
+    });
+  });
+}
+
+function sanitizeId(name) {
+  return String(name).replace(/[^a-zA-Z0-9]/g, '_');
+  renderProjectSourceCharts(d);
+}
   // Always start from STATIC's full 16-project list, then overlay any live values
   const liveMap = {};
   (d.projects || []).forEach(p => { liveMap[p.name] = p; });
