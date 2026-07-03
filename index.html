@@ -918,8 +918,8 @@
       </div>
       <div class="kpi-card danger">
         <div class="kpi-label">Payments Logged</div>
-        <div class="kpi-value">₹0</div>
-        <div class="kpi-sub">0% of target tracked</div>
+        <div class="kpi-value" id="r-logged">₹0</div>
+        <div class="kpi-sub" id="r-logged-sub">0% of target tracked</div>
       </div>
       <div class="kpi-card warn">
         <div class="kpi-label">Revenue Booked (not collected)</div>
@@ -928,7 +928,7 @@
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:20px; border: 0.5px solid rgba(224,85,85,0.3); background: var(--red-bg);">
+    <div class="card" id="recoveryBanner" style="margin-bottom:20px; border: 0.5px solid rgba(224,85,85,0.3); background: var(--red-bg);">
       <div style="font-size:13px; font-weight:600; color:var(--red); margin-bottom:8px;">
         ⚠ Recovery Log Empty — Immediate Action Required
       </div>
@@ -1283,7 +1283,8 @@ function renderKPIs(d) {
   set('k-rev-sub',  '₹' + revAch.toFixed(1) + ' Cr of ₹' + revTgt + ' Cr');
   set('k-unit-pct', unitPct + '%');
   set('k-unit-sub', units + ' of ' + unitsTgt + ' target');
-  set('k-recovery', '₹0');
+  const recTotal = (d.recovery || []).reduce((s, r) => s + (Number(r.logged) || 0), 0);
+  set('k-recovery', '₹' + recTotal.toFixed(2) + ' Cr');
   set('k-conv',     (Number(d.convRate) || 98) + '%');
   set('k-burn',     '₹' + (Number(d.zeroSaleBurn) || 29.14).toFixed(2));
 
@@ -1852,6 +1853,15 @@ function renderRecovery(d) {
       <span class="pill ${r.priority === 'High' ? 'pill-red' : r.priority === 'Medium' ? 'pill-amber' : 'pill-blue'}" style="min-width:48px;text-align:center;">${r.priority}</span>
     </div>`;
   }).join('');
+
+  // ── v12 surgical addition: live collections ──
+  const totalLogged = rec.reduce((s, r) => s + (Number(r.logged) || 0), 0);
+  const totalTarget = rec.reduce((s, r) => s + (Number(r.target) || 0), 0);
+  const pctLogged = totalTarget > 0 ? (totalLogged / totalTarget * 100).toFixed(1) : '0.0';
+  set('r-logged', '₹' + totalLogged.toFixed(2) + ' Cr');
+  set('r-logged-sub', pctLogged + '% of target tracked');
+  const banner = document.getElementById('recoveryBanner');
+  if (banner) banner.style.display = totalLogged > 0 ? 'none' : '';
 }
 
 // ──────────────────────────────────────────────────────────────
