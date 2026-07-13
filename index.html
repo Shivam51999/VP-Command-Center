@@ -604,6 +604,7 @@
   <button class="nav-tab" onclick="showPage('briefing')">Morning Brief</button>
   <button class="nav-tab" onclick="showPage('portfolio')">Portfolio</button>
   <button class="nav-tab" onclick="showPage('team')">Team ROI</button>
+  <button class="nav-tab" onclick="showPage('roster')">Team Manager</button>
   <button class="nav-tab" onclick="showPage('pace')">Booking Pace</button>
   <button class="nav-tab" onclick="showPage('recovery')">Collections</button>
   <button class="nav-tab" onclick="showPage('leads')">Lead Intelligence</button>
@@ -837,6 +838,58 @@
             <span style="font-size:16px; font-weight:700; color:var(--red);" id="totalBurn">₹29.14 L/yr</span>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: TEAM MANAGER (add / remove employees)
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-roster">
+    <div class="section-header">
+      <span class="section-title">Team Manager</span>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin:-6px 0 16px;">
+      Writes directly to the <strong>👥 Team Scorecard</strong> and <strong>💰 P&amp;L</strong> tabs in the source sheet. Changes appear here on the next refresh.
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Add Employee</div>
+        <div style="display:flex;flex-direction:column;gap:10px;max-width:360px;">
+          <div>
+            <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px;">Full Name</label>
+            <input id="tmName" type="text" placeholder="e.g. Rohan Deshmukh"
+              style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--bg2);color:var(--text);font-family:var(--font-body);font-size:13px;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px;">Cluster</label>
+            <select id="tmCluster"
+              style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--bg2);color:var(--text);font-family:var(--font-body);font-size:13px;">
+              <option value="">Select cluster…</option>
+              <option value="Prashant">Prashant</option>
+              <option value="Shivaji">Shivaji</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px;">Annual CTC (₹ Lakhs)</label>
+            <input id="tmCtc" type="number" step="0.01" min="0" placeholder="e.g. 6.50"
+              style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--bg2);color:var(--text);font-family:var(--font-body);font-size:13px;">
+          </div>
+          <button id="tmAddBtn" onclick="addTeamMember()"
+            style="margin-top:4px;padding:10px 16px;background:var(--brand);color:#fff;border:none;border-radius:6px;font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;">
+            Add Employee
+          </button>
+          <div id="tmMsg" style="font-size:12px;min-height:16px;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Current Roster</span>
+          <span id="tmCount" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
+        </div>
+        <div id="tmRoster" style="max-height:420px;overflow-y:auto;"></div>
       </div>
     </div>
   </div>
@@ -1084,9 +1137,7 @@ const STATIC = {
     { name:'Sujata',        cluster:'Prashant', units:2,  revenue:1.65,  ctc:5.28,  roi:31.16  },
     { name:'Subham Gawade', cluster:'Shivaji',  units:0,  revenue:0,     ctc:5.15,  roi:0      },
     { name:'Priyanka Thorat',cluster:'Shivaji', units:0,  revenue:0,     ctc:5.57,  roi:0      },
-    { name:'Vikash',        cluster:'Prashant', units:0,  revenue:0,     ctc:7.68,  roi:0      },
     { name:'Himanshu',      cluster:'Shivaji',  units:0,  revenue:0,     ctc:6.82,  roi:0      },
-    { name:'Ketan',         cluster:'Prashant', units:0,  revenue:0,     ctc:6.96,  roi:0      },
     { name:'Ajay',          cluster:'Shivaji',  units:0,  revenue:0,     ctc:7.68,  roi:0      },
   ],
 
@@ -1206,14 +1257,9 @@ async function fetchAllData() {
       liveProjectMap[sp.name] ? { ...sp, ...liveProjectMap[sp.name] } : sp
     );
 
-    // Merge live team OVER STATIC team — so CTC values are never lost
-    const liveTeamMap = {};
-    (json.team || []).forEach(t => { liveTeamMap[t.name] = t; });
-    const mergedTeam = STATIC.team.map(st => {
-      const live = liveTeamMap[st.name];
-      if (!live) return st;
-      return { ...st, units: live.units ?? st.units, revenue: live.revenue || st.revenue, ctc: live.ctc || st.ctc, roi: live.roi || st.roi };
-    });
+    // Merge live team OVER STATIC team, unioned so brand-new hires (present
+    // live but not yet in the STATIC fallback) aren't silently dropped here.
+    const mergedTeam = mergeTeam({ team: json.team || [] });
 
     data = {
       ...STATIC,
@@ -1266,6 +1312,7 @@ function renderAll(d) {
   renderPace(d);
   renderRecovery(d);
   renderLeads(d);
+  renderTeamManager(d);
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -1491,13 +1538,7 @@ function renderBriefing(d) {
   (d.projects || []).forEach(p => { liveProjectMap[p.name] = p; });
   const projects = STATIC.projects.map(sp => liveProjectMap[sp.name] ? { ...sp, ...liveProjectMap[sp.name] } : sp);
 
-  const liveTeamMap = {};
-  (d.team || []).forEach(t => { liveTeamMap[t.name] = t; });
-  const team = STATIC.team.map(st => {
-    const live = liveTeamMap[st.name];
-    if (!live) return st;
-    return { ...st, units: live.units ?? st.units, revenue: live.revenue || st.revenue, ctc: live.ctc || st.ctc, roi: live.roi || st.roi };
-  });
+  const team = mergeTeam(d);
 
   const recovery = (d.recovery && d.recovery.length) ? d.recovery : STATIC.recovery;
   const leadSources = (d.leadSources && d.leadSources.length) ? d.leadSources : STATIC.leadSources;
@@ -1849,16 +1890,41 @@ function updateScenario(val) {
 }
 
 // ──────────────────────────────────────────────────────────────
+// TEAM MERGE — shared by renderTeam / renderBriefing / renderTeamManager.
+// Unlike a STATIC-only overlay, this UNIONS names from both sources so
+// a brand-new hire (present in live data but not in the STATIC fallback)
+// still shows up, and someone removed from the live sheet doesn't keep
+// reappearing just because their old STATIC row is still in the file.
+function mergeTeam(d) {
+  const liveTeam = d.team || [];
+  if (liveTeam.length === 0) {
+    // No live data at all (offline / fetch failed) — use the STATIC snapshot wholesale
+    return STATIC.team.map(t => ({ ...t }));
+  }
+  // Live data exists: it decides WHO is on the roster (so a deletion in the
+  // sheet actually takes effect here), STATIC only patches individual fields
+  // that are missing/zero for a name it still recognizes (e.g. a CTC lookup
+  // that failed due to a name mismatch) — it never adds back someone the
+  // live sheet no longer lists.
+  const staticMap = {};
+  STATIC.team.forEach(t => { staticMap[t.name] = t; });
+  return liveTeam.map(t => {
+    const fb = staticMap[t.name];
+    return {
+      name: t.name,
+      cluster: t.cluster || (fb && fb.cluster) || '—',
+      units:   t.units ?? (fb ? fb.units : 0),
+      revenue: t.revenue || (fb ? fb.revenue : 0),
+      ctc:     t.ctc || (fb ? fb.ctc : 0),
+      roi:     t.roi || (fb ? fb.roi : 0),
+    };
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
 // TEAM
 function renderTeam(d) {
-  // Always overlay live data on STATIC team so CTC values are never missing
-  const liveTeamMap = {};
-  (d.team || []).forEach(t => { liveTeamMap[t.name] = t; });
-  const team = STATIC.team.map(st => {
-    const live = liveTeamMap[st.name];
-    if (!live) return st;
-    return { ...st, units: live.units ?? st.units, revenue: live.revenue || st.revenue, roi: live.roi || st.roi };
-  }).sort((a,b) => b.units - a.units);
+  const team = mergeTeam(d).sort((a,b) => b.units - a.units);
 
   document.getElementById('teamTableBody').innerHTML = team.map(t => {
     const statusPill = t.units === 0
@@ -1890,6 +1956,107 @@ function renderTeam(d) {
   const totalBurn = zeros.reduce((s,t) => s + t.ctc, 0);
   set('totalBurn', '₹' + totalBurn.toFixed(2) + ' L/yr');
 }
+
+// ──────────────────────────────────────────────────────────────
+// TEAM MANAGER — add / remove employees (writes to the Google Sheet
+// via the same Apps Script relay, using the ?action= query param)
+
+function renderTeamManager(d) {
+  const container = document.getElementById('tmRoster');
+  if (!container) return; // page not present in this build — no-op
+
+  const team = mergeTeam(d).sort((a,b) => a.name.localeCompare(b.name));
+  document.getElementById('tmCount').textContent = team.length + ' on roster';
+
+  container.innerHTML = team.map(t => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-bottom:0.5px solid var(--border);">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);">${t.name}</div>
+        <div style="font-size:11px;color:var(--text3);">${t.cluster || '—'} · ₹${Number(t.ctc||0).toFixed(2)}L/yr · ${t.units} unit${t.units===1?'':'s'} sold</div>
+      </div>
+      <button onclick="deleteTeamMember(${JSON.stringify(t.name)})"
+        style="font-size:11px;color:var(--red);background:var(--red-bg);border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-family:var(--font-body);">
+        Remove
+      </button>
+    </div>`).join('') || '<div style="padding:12px;color:var(--text3);font-size:12px;">No team members loaded yet.</div>';
+}
+
+// Same JSONP-via-script-tag technique fetchAllData() uses — avoids all
+// CORS issues since GET script-tag loads aren't subject to CORS, unlike
+// a fetch()/XHR POST would be against a plain Apps Script deployment.
+function callAppsScript(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = '__gs_cb_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { delete window[cbName]; script.remove(); reject(new Error('Timeout')); }, 20000);
+    window[cbName] = (data) => { clearTimeout(timer); delete window[cbName]; script.remove(); resolve(data); };
+    script.onerror = () => { clearTimeout(timer); delete window[cbName]; script.remove(); reject(new Error('Load failed')); };
+    const qs = Object.keys(params)
+      .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+      .join('&');
+    script.src = CONFIG.APPS_SCRIPT_URL + '?' + qs + '&callback=' + cbName + '&t=' + Date.now();
+    document.head.appendChild(script);
+  });
+}
+
+function showTmMsg(text, kind) {
+  const el = document.getElementById('tmMsg');
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = kind === 'error' ? 'var(--red)' : kind === 'success' ? 'var(--green)' : 'var(--text3)';
+}
+
+async function addTeamMember() {
+  const nameEl = document.getElementById('tmName');
+  const clusterEl = document.getElementById('tmCluster');
+  const ctcEl = document.getElementById('tmCtc');
+  const btn = document.getElementById('tmAddBtn');
+
+  const name = (nameEl.value || '').trim();
+  const cluster = clusterEl.value;
+  const ctcLakhs = parseFloat(ctcEl.value);
+
+  if (!name)                       { showTmMsg('Name is required.', 'error'); return; }
+  if (!cluster)                    { showTmMsg('Cluster is required.', 'error'); return; }
+  if (!ctcLakhs || ctcLakhs <= 0)  { showTmMsg('Enter a valid annual CTC in ₹ Lakhs.', 'error'); return; }
+
+  btn.disabled = true; btn.textContent = 'Adding…';
+  showTmMsg('Writing to the sheet…', '');
+  try {
+    const res = await callAppsScript({
+      action: 'addTeamMember',
+      name, cluster,
+      ctc: Math.round(ctcLakhs * 100000), // convert L → raw ₹, matches P&L's stored unit
+    });
+    if (res && res.success) {
+      showTmMsg(res.message || (name + ' added.'), 'success');
+      nameEl.value = ''; ctcEl.value = ''; clusterEl.value = '';
+      fetchAllData();
+    } else {
+      showTmMsg((res && res.error) || 'Could not add employee — check the sheet.', 'error');
+    }
+  } catch (e) {
+    showTmMsg('Could not reach Google Sheets: ' + e.message, 'error');
+  }
+  btn.disabled = false; btn.textContent = 'Add Employee';
+}
+
+async function deleteTeamMember(name) {
+  if (!confirm('Remove ' + name + ' from Team Scorecard and P&L? This edits the live sheet and cannot be undone from here.')) return;
+  showTmMsg('Removing ' + name + '…', '');
+  try {
+    const res = await callAppsScript({ action: 'deleteTeamMember', name });
+    if (res && res.success) {
+      showTmMsg(res.message || (name + ' removed.'), 'success');
+      fetchAllData();
+    } else {
+      showTmMsg((res && res.error) || 'Could not remove employee — check the sheet.', 'error');
+    }
+  } catch (e) {
+    showTmMsg('Could not reach Google Sheets: ' + e.message, 'error');
+  }
+}
+
 
 // ──────────────────────────────────────────────────────────────
 // PACE
