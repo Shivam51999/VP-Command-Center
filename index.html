@@ -1968,13 +1968,20 @@ function renderTeamManager(d) {
   const team = mergeTeam(d).sort((a,b) => a.name.localeCompare(b.name));
   document.getElementById('tmCount').textContent = team.length + ' on roster';
 
+  // HTML-attribute-escape a JS-string literal so it survives being embedded
+  // inside a double-quoted onclick="..." attribute (a name that itself
+  // contains a quote/amp/angle-bracket must not prematurely close the attr).
+  const escAttr = s => String(s)
+    .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
   container.innerHTML = team.map(t => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-bottom:0.5px solid var(--border);">
       <div>
         <div style="font-size:13px;font-weight:600;color:var(--text);">${t.name}</div>
         <div style="font-size:11px;color:var(--text3);">${t.cluster || '—'} · ₹${Number(t.ctc||0).toFixed(2)}L/yr · ${t.units} unit${t.units===1?'':'s'} sold</div>
       </div>
-      <button onclick="deleteTeamMember(${JSON.stringify(t.name)})"
+      <button onclick="deleteTeamMember(${escAttr(JSON.stringify(t.name))})"
         style="font-size:11px;color:var(--red);background:var(--red-bg);border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-family:var(--font-body);">
         Remove
       </button>
