@@ -1480,22 +1480,158 @@ function renderCharts(d) {
 
 // ──────────────────────────────────────────────────────────────
 // BRIEFING
+// Fully computed from live-fetched `d` on every refresh (was previously
+// a hardcoded snapshot frozen at 2 Jun 2026 — that's why it never updated).
 function renderBriefing(d) {
-  document.getElementById('briefDate').textContent = 'As of June 2, 2026';
+  document.getElementById('briefDate').textContent =
+    'As of ' + new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
 
-  const alerts = [
-    { type:'p1', icon:'🔴', title:'5 high-priority projects: 0 bookings — ₹835 Cr revenue gap', desc:'Starview (₹278 Cr), Momento (₹209 Cr), Borhadewadi-1 (₹185 Cr), Mithila-2 (₹110 Cr), Myra (₹53 Cr) have zero bookings this year. These alone represent 64% of the annual target.', action:'Decision: Launch readiness review + assign cluster heads within 7 days', actionClass:'action-red' },
-    { type:'p1', icon:'🔴', title:'4 salespeople with zero sales — ₹29.14 L CTC burn with ₹0 revenue', desc:'Vikash (₹7.68L), Ajay (₹7.68L), Ketan (₹6.96L), Himanshu (₹6.82L) — all Managers or senior reps, all zero bookings.', action:'Decision: Issue PIP letters within 30 days or reassign to active project sites', actionClass:'action-red' },
-    { type:'p1', icon:'🔴', title:'Collections at ₹0 — ₹961 Cr recovery completely untracked', desc:'Recovery log shows #REF! error. No payment entries exist across any of the 16 projects. If even 10% of ₹961 Cr target is outstanding, ₹96 Cr in cash flow is invisible to leadership.', action:'Decision: Mandate Friday collections entry. Assign one person per cluster to own this.', actionClass:'action-red' },
-    { type:'p2', icon:'🟡', title:'Booking pace is 3.6× below minimum — annual target at severe risk', desc:'Running at 12.4 bookings/week; need 45.5/week to hit 2,070 by March 2027. At current pace, year-end projection is ~599 units (28.9% achievement).', action:'Decision: Increase CP network activation, launch digital campaign for Midas City and Aikyam this week', actionClass:'action-amber' },
-    { type:'p2', icon:'🟡', title:'Miraya: 0 bookings despite ₹96 Cr recovery target', desc:'Miraya has a ₹96 Cr recovery target with 40 units unsold and 0% achievement. This suggests a project-level block — possibly approvals, construction delay, or pricing issue.', action:'Decision: Investigate Miraya project status with COO. Is this project launchable this FY?', actionClass:'action-amber' },
-  ];
+  // ── Merge live over STATIC, same pattern used by renderPortfolio/renderTeam ──
+  const liveProjectMap = {};
+  (d.projects || []).forEach(p => { liveProjectMap[p.name] = p; });
+  const projects = STATIC.projects.map(sp => liveProjectMap[sp.name] ? { ...sp, ...liveProjectMap[sp.name] } : sp);
 
-  const wins = [
-    { type:'win', icon:'🟢', title:'Lifepark: 271% units, 433% revenue — the benchmark playbook', desc:'Krushna (15 units, ₹7.7 Cr, ROI: 133×) and Mayur Anarse (13 units) drove this through a pure Channel Partner model. CP leads convert at 96.2%.', action:'Replicate: Document Krushna\'s CP outreach process and deploy to Midas City and Aikyam immediately', actionClass:'action-green' },
-    { type:'win', icon:'🟢', title:'98% booking conversion rate — lead quality is exceptional', desc:'Only 2 leads lost out of 101 total enquiries. The quality filter is working. The constraint is volume, not conversion. Scale inbound aggressively.', action:'Strategy: Double CP activations, invest ₹5–10L/month in digital — cost per booking is already under ₹1.25L', actionClass:'action-green' },
-    { type:'win', icon:'🟢', title:'Team cost efficiency: ₹45.88 revenue per ₹1 of CTC (active sellers)', desc:'For salespeople who are selling, the unit economics are excellent. Krushna generates ₹133 for every ₹1 spent on his salary. This is best-in-class.', action:'Focus: Remove zero-performers and the ratio improves even further', actionClass:'action-green' },
-  ];
+  const liveTeamMap = {};
+  (d.team || []).forEach(t => { liveTeamMap[t.name] = t; });
+  const team = STATIC.team.map(st => {
+    const live = liveTeamMap[st.name];
+    if (!live) return st;
+    return { ...st, units: live.units ?? st.units, revenue: live.revenue || st.revenue, ctc: live.ctc || st.ctc, roi: live.roi || st.roi };
+  });
+
+  const recovery = (d.recovery && d.recovery.length) ? d.recovery : STATIC.recovery;
+  const leadSources = (d.leadSources && d.leadSources.length) ? d.leadSources : STATIC.leadSources;
+  const salesLog = (d.salesLog && d.salesLog.length) ? d.salesLog : STATIC.salesLog;
+
+  const alerts = [];
+  const wins = [];
+
+  // ── P1: high-priority projects with zero bookings ──
+  const highPriorityZero = projects.filter(p => p.priority === 'High' && Number(p.uSold) === 0);
+  if (highPriorityZero.length) {
+    const gap = highPriorityZero.reduce((s,p) => s + Number(p.revTarget || 0), 0);
+    const totalTarget = projects.reduce((s,p) => s + Number(p.revTarget || 0), 0);
+    const gapPct = totalTarget > 0 ? Math.round(gap / totalTarget * 100) : 0;
+    const names = highPriorityZero.map(p => `${p.name} (₹${Number(p.revTarget).toFixed(0)} Cr)`).join(', ');
+    alerts.push({ type:'p1', icon:'🔴',
+      title:`${highPriorityZero.length} high-priority project${highPriorityZero.length>1?'s':''}: 0 bookings — ₹${gap.toFixed(0)} Cr revenue gap`,
+      desc:`${names} ${highPriorityZero.length>1?'have':'has'} zero bookings this year. These alone represent ${gapPct}% of the annual target.`,
+      action:'Decision: Launch readiness review + assign cluster heads within 7 days', actionClass:'action-red' });
+  }
+
+  // ── P1: zero-sale salespeople ──
+  const zeroReps = team.filter(t => Number(t.units) === 0);
+  if (zeroReps.length) {
+    const burn = zeroReps.reduce((s,t) => s + Number(t.ctc || 0), 0);
+    const names = zeroReps.map(t => `${t.name} (₹${Number(t.ctc).toFixed(2)}L)`).join(', ');
+    alerts.push({ type:'p1', icon:'🔴',
+      title:`${zeroReps.length} salespeople with zero sales — ₹${burn.toFixed(2)} L CTC burn with ₹0 revenue`,
+      desc:`${names} — all zero bookings.`,
+      action:'Decision: Issue PIP letters within 30 days or reassign to active project sites', actionClass:'action-red' });
+  }
+
+  // ── P1/P2: collections tracking ──
+  const recTarget = recovery.reduce((s,r) => s + (Number(r.target) || 0), 0);
+  const recLogged = recovery.reduce((s,r) => s + (Number(r.logged) || 0), 0);
+  const recPct = recTarget > 0 ? (recLogged / recTarget * 100) : 0;
+  if (recLogged === 0) {
+    alerts.push({ type:'p1', icon:'🔴',
+      title:`Collections at ₹0 — ₹${recTarget.toFixed(0)} Cr recovery completely untracked`,
+      desc:`No payment entries exist across any of the ${recovery.length} projects. If even 10% of ₹${recTarget.toFixed(0)} Cr target is outstanding, ₹${(recTarget*0.1).toFixed(0)} Cr in cash flow is invisible to leadership.`,
+      action:'Decision: Mandate Friday collections entry. Assign one person per cluster to own this.', actionClass:'action-red' });
+  } else if (recPct < 50) {
+    alerts.push({ type:'p2', icon:'🟡',
+      title:`Collections tracking behind — only ${recPct.toFixed(0)}% of recovery logged`,
+      desc:`₹${recLogged.toFixed(2)} Cr logged against a ₹${recTarget.toFixed(0)} Cr target across ${recovery.length} projects.`,
+      action:'Decision: Mandate Friday collections entry. Assign one person per cluster to own this.', actionClass:'action-amber' });
+  }
+
+  // ── P2: booking pace vs required rate ──
+  const rawWeeks = d.weeks || [];
+  const validWeeks = rawWeeks.filter(w => w.week && String(w.week).match(/^Wk/i) && Number(w.actual) < 500 && Number(w.target) < 500);
+  const weeks = validWeeks.length >= 2 ? validWeeks : STATIC.weeks;
+  const totalActual = weeks.reduce((s,w) => s + Number(w.actual), 0);
+  const runRate = totalActual / (weeks.length || 1);
+  const liveRequired = Number(d.requiredRate);
+  const requiredRate = (liveRequired > 12 && liveRequired < 500) ? liveRequired : 45.5;
+  const unitsTarget = Number(d.unitsTarget) || STATIC.unitsTarget;
+  const unitsAchieved = Number(d.unitsAchieved) || STATIC.unitsAchieved;
+
+  // weeks remaining to the next fiscal year end (March 31)
+  const today = new Date();
+  let fye = new Date(today.getFullYear(), 2, 31);
+  if (today > fye) fye = new Date(today.getFullYear() + 1, 2, 31);
+  const weeksRemaining = Math.max(1, Math.ceil((fye - today) / (7*24*3600*1000)));
+  const projectedUnits = Math.round(unitsAchieved + runRate * weeksRemaining);
+  const projectedPct = (projectedUnits / unitsTarget * 100).toFixed(1);
+  const paceRatio = runRate > 0 ? (requiredRate / runRate) : 0;
+
+  if (runRate < requiredRate) {
+    alerts.push({ type:'p2', icon:'🟡',
+      title:`Booking pace is ${paceRatio.toFixed(1)}× below minimum — annual target at severe risk`,
+      desc:`Running at ${runRate.toFixed(1)} bookings/week; need ${requiredRate}/week to hit ${unitsTarget.toLocaleString('en-IN')} by ${fye.toLocaleDateString('en-US',{month:'long',year:'numeric'})}. At current pace, year-end projection is ~${projectedUnits.toLocaleString('en-IN')} units (${projectedPct}% achievement).`,
+      action:'Decision: Increase CP network activation, launch digital campaign for underperforming high-priority projects this week', actionClass:'action-amber' });
+  }
+
+  // ── P2: a lower-priority project with zero bookings but a live recovery target (hidden risk) ──
+  const recMap = {};
+  recovery.forEach(r => { recMap[r.project] = r; });
+  const hiddenRiskCandidates = projects
+    .filter(p => Number(p.uSold) === 0 && p.priority !== 'High' && recMap[p.name] && Number(recMap[p.name].target) > 0)
+    .sort((a,b) => Number(recMap[b.name].target) - Number(recMap[a.name].target));
+  if (hiddenRiskCandidates.length) {
+    const p = hiddenRiskCandidates[0];
+    const target = Number(recMap[p.name].target);
+    alerts.push({ type:'p2', icon:'🟡',
+      title:`${p.name}: 0 bookings despite ₹${target.toFixed(0)} Cr recovery target`,
+      desc:`${p.name} has a ₹${target.toFixed(0)} Cr recovery target with ${p.uTarget} units unsold and 0% achievement. This suggests a project-level block — possibly approvals, construction delay, or pricing issue.`,
+      action:`Decision: Investigate ${p.name} project status with COO. Is this project launchable this FY?`, actionClass:'action-amber' });
+  }
+
+  // ── WIN: best-performing project ──
+  const projsWithTarget = projects.filter(p => Number(p.revTarget) > 0);
+  if (projsWithTarget.length) {
+    const best = projsWithTarget.reduce((a,b) => (Number(b.revAch)/Number(b.revTarget)) > (Number(a.revAch)/Number(a.revTarget)) ? b : a);
+    const revPct = Math.round(Number(best.revAch) / Number(best.revTarget) * 100);
+    const unitPct = best.uTarget > 0 ? Math.round(Number(best.uSold) / Number(best.uTarget) * 100) : 0;
+    if (revPct >= 100) {
+      const topReps = team.filter(t => Number(t.units) > 0).sort((a,b) => b.units - a.units).slice(0,2);
+      const repText = topReps.map(t => `${t.name} (${t.units} units${t.revenue?`, ₹${t.revenue.toFixed(1)} Cr`:''}${t.roi?`, ROI: ${t.roi.toFixed(0)}×`:''})`).join(' and ');
+      const cpSource = leadSources.find(s => /channel partner/i.test(s.source));
+      wins.push({ type:'win', icon:'🟢',
+        title:`${best.name}: ${unitPct}% units, ${revPct}% revenue — the benchmark playbook`,
+        desc:`${repText || 'Top reps'} drove this${cpSource ? ` through a pure Channel Partner model. CP leads convert at ${cpSource.conv}%.` : '.'}`,
+        action:`Replicate: Document ${topReps[0]?.name || 'the top rep'}'s outreach process and deploy to underperforming high-priority projects`, actionClass:'action-green' });
+    }
+  }
+
+  // ── WIN: conversion rate ──
+  if (salesLog.length) {
+    const lost = salesLog.filter(s => s.status === 'Lost').length;
+    const total = salesLog.length;
+    const convPct = Math.round((total - lost) / total * 100);
+    if (convPct >= 90) {
+      wins.push({ type:'win', icon:'🟢',
+        title:`${convPct}% booking conversion rate — lead quality is exceptional`,
+        desc:`Only ${lost} lead${lost===1?'':'s'} lost out of ${total} total enquiries logged. The quality filter is working. The constraint is volume, not conversion. Scale inbound aggressively.`,
+        action:'Strategy: Double CP activations and invest further in digital — cost per booking remains efficient', actionClass:'action-green' });
+    }
+  }
+
+  // ── WIN: team cost efficiency among active sellers ──
+  const activeTeam = team.filter(t => Number(t.units) > 0);
+  if (activeTeam.length) {
+    const totalRev = activeTeam.reduce((s,t) => s + Number(t.revenue || 0), 0);
+    const totalCtc = activeTeam.reduce((s,t) => s + Number(t.ctc || 0), 0);
+    const ratio = totalCtc > 0 ? (totalRev * 100 / totalCtc) : 0; // revenue in Cr, ctc in L — ×100 matches the per-rep roi field's convention
+    const topRoi = activeTeam.reduce((a,b) => (b.roi||0) > (a.roi||0) ? b : a);
+    if (ratio > 0) {
+      wins.push({ type:'win', icon:'🟢',
+        title:`Team cost efficiency: ₹${ratio.toFixed(2)} revenue per ₹1 of CTC (active sellers)`,
+        desc:`For salespeople who are selling, the unit economics are strong. ${topRoi.name} generates ₹${(topRoi.roi||0).toFixed(0)} for every ₹1 spent on their salary.`,
+        action:'Focus: Remove zero-performers and the ratio improves even further', actionClass:'action-green' });
+    }
+  }
 
   document.getElementById('alertList').innerHTML = alerts.map(a => `
     <div class="alert-card ${a.type}">
